@@ -1,1 +1,3 @@
 /Users/peterliu/workspace/mcp-servers/modules/random/src/main/java/io/mcp/random/RandomNumberServer.java
+/Users/peterliu/workspace/mcp-servers/modules/random/src/main/java/io/mcp/random/service/RandomService.java
+/Users/peterliu/workspace/mcp-servers/modules/random/src/main/java/io/mcp/random/tool/GenerateRandom.java
