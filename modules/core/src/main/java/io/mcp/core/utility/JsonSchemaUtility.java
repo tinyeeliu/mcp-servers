@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,25 +31,33 @@ public class JsonSchemaUtility {
         return OBJECT_MAPPER.readTree(jsonString);
     }
 
-    public static McpSchema.JsonSchema toJsonSchema(JsonNode jsonNode) throws IOException {
-        String type = jsonNode.get("type").asText();
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> properties = jsonNode.has("properties") ?
-            (Map<String, Object>) OBJECT_MAPPER.convertValue(jsonNode.get("properties"), Map.class) : null;
-
-        @SuppressWarnings("unchecked")
-        List<String> required = jsonNode.has("required") ?
-            (List<String>) OBJECT_MAPPER.convertValue(jsonNode.get("required"), List.class) : null;
-
-        // For now, set optional fields to null like in GenerateRandom example
-        Object additionalProperties = null;
-        Object items = null;
-        Object enumValues = null;
-
-        return new McpSchema.JsonSchema(type, properties, required, additionalProperties, items, enumValues);
+    //given a json node, return a McpSchema.JsonSchema
+    private static McpSchema.JsonSchema toJsonSchema(JsonNode jsonNode) throws IOException {
+        String type = jsonNode.has("type") ? jsonNode.get("type").asText() : null;
+        
+        Map<String, Object> properties = null;
+        if (jsonNode.has("properties")) {
+            properties = OBJECT_MAPPER.convertValue(jsonNode.get("properties"), 
+                new TypeReference<Map<String, Object>>() {});
+        }
+        
+        List<String> required = null;
+        if (jsonNode.has("required")) {
+            required = OBJECT_MAPPER.convertValue(jsonNode.get("required"), 
+                new TypeReference<List<String>>() {});
+        }
+        
+        return new McpSchema.JsonSchema(
+            type,
+            properties,
+            required,
+            null,
+            null,
+            null
+        );
     }
 
+    //given a json node, return a McpSchema.Tool
     public static McpSchema.Tool getTool(JsonNode jsonNode) throws IOException {
         String name = jsonNode.get("name").asText();
         String description = jsonNode.get("description").asText();
