@@ -2,12 +2,13 @@ package io.mcp.random.tool;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.mcp.core.base.BaseMcpTool;
 import io.mcp.core.utility.JsonSchemaUtility;
-import io.modelcontextprotocol.server.McpSyncServerExchange;
+import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 
@@ -27,7 +28,7 @@ public class GenerateRandom extends BaseMcpTool {
     }
 
     @Override
-    public McpSchema.CallToolResult call(McpSyncServerExchange exchange, CallToolRequest request) {
+    public CompletableFuture<McpSchema.CallToolResult> call(McpAsyncServerExchange exchange, CallToolRequest request) {
 
         int bound = ((Number) request.arguments().get("bound")).intValue();
 
@@ -35,10 +36,12 @@ public class GenerateRandom extends BaseMcpTool {
             throw new IllegalArgumentException("bound must be a positive integer");
         }
         int result = random.nextInt(bound);
-        return McpSchema.CallToolResult.builder()
+        return CompletableFuture.completedFuture(
+            McpSchema.CallToolResult.builder()
                 .addTextContent(makePrefix() + result)
                 .isError(false)
-                .build();
+                .build()
+        );
     }
     
     
