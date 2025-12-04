@@ -1,0 +1,36 @@
+package com.example.mcp;
+import java.time.Duration;
+import java.util.Map;
+
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.client.transport.ServerParameters;
+import io.modelcontextprotocol.client.transport.StdioClientTransport;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+
+public class SimpleClientMCP {
+    public static void main(String[] args) {
+        int requestTimeoutSeconds = 30;
+        String basePath = System.getProperty("user.home") + "/Documents";
+
+        StdioClientTransport stdioTransport = new StdioClientTransport(
+            ServerParameters.builder("cmd.exe")
+                .args("/c", "npx @modelcontextprotocol/server-filesystem " + basePath)
+                .build());
+
+        McpSyncClient client = McpClient.sync(stdioTransport)
+            .requestTimeout(Duration.ofSeconds(requestTimeoutSeconds))
+            .build();
+
+        client.initialize();
+
+        CallToolRequest request = new CallToolRequest("write_file", Map.of(
+            "path", basePath + "\\test.txt",
+            "content", "Olá!\n\nThis is a sample using Model Context Protocol."
+        ));
+
+        CallToolResult result = client.callTool(request);
+        System.out.println(result.toString());
+    }
+}
