@@ -6,7 +6,9 @@ import java.util.Random;
 
 import io.mcp.core.base.BaseMcpTool;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 
 public class GenerateRandom extends BaseMcpTool {
 
@@ -17,12 +19,18 @@ public class GenerateRandom extends BaseMcpTool {
     }
 
     @Override
-    public String call(int bound) {
+    public McpSchema.CallToolResult call(McpSyncServerExchange exchange, CallToolRequest request) {
+
+        int bound = ((Number) request.arguments().get("bound")).intValue();
+
         if (bound <= 0) {
             throw new IllegalArgumentException("bound must be a positive integer");
         }
         int result = random.nextInt(bound);
-        return makePrefix() + result;
+        return McpSchema.CallToolResult.builder()
+                .addTextContent(makePrefix() + result)
+                .isError(false)
+                .build();
     }
 
     @Override
@@ -59,16 +67,10 @@ public class GenerateRandom extends BaseMcpTool {
                 .tool(getTool())
                 .callHandler((exchange, request) -> {
                     try {
-                        int bound = ((Number) request.arguments().get("bound")).intValue();
-                        String result = call(bound);
-
+                        return call(exchange, request);
+                    } catch (Exception e) {
                         return McpSchema.CallToolResult.builder()
-                                .addTextContent(result)
-                                .isError(false)
-                                .build();
-                    } catch (IllegalArgumentException e) {
-                        return McpSchema.CallToolResult.builder()
-                                .addTextContent("Error: " + e.getMessage())
+                                .addTextContent(e.getMessage())
                                 .isError(true)
                                 .build();
                     }
