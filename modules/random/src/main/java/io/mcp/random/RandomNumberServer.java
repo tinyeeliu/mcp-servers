@@ -35,6 +35,10 @@ public class RandomNumberServer {
         }));
     }
 
+    private static String getPrefix() {
+        return "V2-";
+    }   
+
     private static McpServerFeatures.SyncToolSpecification generateRandomTool() {
         var inputSchema = new McpSchema.JsonSchema(
                 "object",
@@ -71,7 +75,7 @@ public class RandomNumberServer {
                     int result = random.nextInt(bound);
 
                     return McpSchema.CallToolResult.builder()
-                            .addTextContent(String.valueOf(result))
+                            .addTextContent(getPrefix() + result)
                             .isError(false)
                             .build();
                 })
