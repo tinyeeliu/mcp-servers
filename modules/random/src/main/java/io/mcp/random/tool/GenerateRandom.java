@@ -2,18 +2,24 @@ package io.mcp.random.tool;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import io.modelcontextprotocol.spec.McpSchema;
 
 public class GenerateRandom {
-    
+
+    private static final Random random = new Random();
+
     private String makePrefix() {
         return "V6-HOT-RELOADED-";
     }
 
-
     public String call(int bound) {
-        return makePrefix() + bound;
+        if (bound <= 0) {
+            throw new IllegalArgumentException("bound must be a positive integer");
+        }
+        int result = random.nextInt(bound);
+        return makePrefix() + result;
     }
 
     public McpSchema.JsonSchema getInputSchema() {
