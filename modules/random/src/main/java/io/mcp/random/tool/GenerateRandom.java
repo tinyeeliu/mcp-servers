@@ -1,10 +1,12 @@
 package io.mcp.random.tool;
 
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
 import java.util.Random;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.mcp.core.base.BaseMcpTool;
+import io.mcp.core.utility.JsonSchemaUtility;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -39,9 +41,25 @@ public class GenerateRandom extends BaseMcpTool {
                 .build();
     }
     
-
-
+    
     @Override
+    public McpSchema.Tool getTool() {
+
+        try {
+            String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/random/tool/" + getName() + ".json");
+            JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
+            return JsonSchemaUtility.getTool(jsonNode);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load tool specification", e);
+        }
+
+
+    }
+
+
+
+    /* 
+    //@Override
     public McpSchema.JsonSchema getInputSchema() {
         McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema(
             "object",
@@ -67,7 +85,7 @@ public class GenerateRandom extends BaseMcpTool {
                 .description("Generates a random integer between 0 (inclusive) and the specified bound (exclusive)")
                 .inputSchema(getInputSchema())
                 .build();
-    }
+    }*/
 
 
 }

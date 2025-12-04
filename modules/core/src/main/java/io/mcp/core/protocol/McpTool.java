@@ -8,7 +8,7 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
 public interface McpTool {
    
-    public McpSchema.JsonSchema getInputSchema();
+    //public McpSchema.JsonSchema getInputSchema();
     public McpSchema.Tool getTool();
     public McpServerFeatures.SyncToolSpecification getToolSpecification();
     public CallToolResult call(McpSyncServerExchange exchange, CallToolRequest request);

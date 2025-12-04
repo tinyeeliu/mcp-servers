@@ -39,5 +39,5 @@ echo "JAR file: $JAR_FILE"
 echo "Server command: java -jar $JAR_FILE"
 echo ""
 
-npx @modelcontextprotocol/inspector@0.17.2 --transport stdio java --enable-preview -jar "$JAR_FILE"
+npx @modelcontextprotocol/inspector@0.17.2 --transport stdio java --enable-preview -jar "$JAR_FILE" 2>&1 | cat
 

@@ -19,10 +19,11 @@ public class JsonSchemaUtility {
 
     public static String loadJsonSchema(String path) throws IOException {
 
-        //load resource from classpath
-        InputStream inputStream = JsonSchemaUtility.class.getResourceAsStream(path);
+        //load resource from classpath - ensure path starts with "/"
+        String resourcePath = path.startsWith("/") ? path : "/" + path;
+        InputStream inputStream = JsonSchemaUtility.class.getResourceAsStream(resourcePath);
         if (inputStream == null) {
-            throw new RuntimeException("Resource not found: " + path);
+            throw new RuntimeException("Resource not found: " + resourcePath);
         }
         return new String(inputStream.readAllBytes());
     }
