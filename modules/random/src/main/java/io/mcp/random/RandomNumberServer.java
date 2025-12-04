@@ -1,17 +1,13 @@
 package io.mcp.random;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.mcp.core.server.StdioServer;
 import io.mcp.random.service.RandomService;
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
-import io.modelcontextprotocol.server.McpServer;
-import io.modelcontextprotocol.server.McpSyncServer;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
-import io.modelcontextprotocol.spec.McpSchema;
 
 public class RandomNumberServer {
 
     public static void main(String[] args) {
+
+        /* 
         var jsonMapper = new JacksonMcpJsonMapper(new ObjectMapper());
         var transportProvider = new StdioServerTransportProvider(jsonMapper);
 
@@ -28,7 +24,9 @@ public class RandomNumberServer {
         // Add shutdown hook for graceful shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.close();
-        }));
+        }));*/
+        StdioServer stdioServer = new StdioServer();
+        stdioServer.start(new RandomService());
     }
 
 }
