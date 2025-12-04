@@ -58,34 +58,4 @@ public class GenerateRandom extends BaseMcpTool {
 
 
 
-    /* 
-    //@Override
-    public McpSchema.JsonSchema getInputSchema() {
-        McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema(
-            "object",
-                Map.of(
-                        "bound", Map.of(
-                                "type", "integer",
-                                "description", "The upper bound (exclusive) for the random number. Must be positive."
-                        )
-                ),
-                List.of("bound"),
-                null,
-                null,
-                null
-        );   
-        return inputSchema;
-    }
-
-
-    @Override
-    public McpSchema.Tool getTool() {
-        return McpSchema.Tool.builder()
-                .name(getName())
-                .description("Generates a random integer between 0 (inclusive) and the specified bound (exclusive)")
-                .inputSchema(getInputSchema())
-                .build();
-    }*/
-
-
 }
