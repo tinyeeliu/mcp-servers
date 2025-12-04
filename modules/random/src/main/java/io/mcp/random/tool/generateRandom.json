@@ -1,0 +1,14 @@
+{
+  "name": "generateRandom",
+  "description": "Generates a random integer between 0 (inclusive) and the specified bound (exclusive)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "bound": {
+        "type": "integer",
+        "description": "The upper bound (exclusive) for the random number. Must be positive."
+      }
+    },
+    "required": ["bound"]
+  }
+}
