@@ -37,7 +37,7 @@ public class RandomNumberServer {
 
     private static String getPrefix() {
         System.err.println("getPrefix");
-        return "V4-HOT-RELOADED-";
+        return "V6-HOT-RELOADED-";
     }   
 
     private static McpServerFeatures.SyncToolSpecification generateRandomTool() {

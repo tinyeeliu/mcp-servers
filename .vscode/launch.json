@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug RandomNumberServer",
+            "request": "launch",
+            "mainClass": "io.mcp.random.RandomNumberServer",
+            "projectName": "mcp-random",
+            "vmArgs": "--enable-preview",
+            "console": "integratedTerminal"
+        }
+    ]
+}
+
