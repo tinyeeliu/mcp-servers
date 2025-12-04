@@ -1,14 +1,16 @@
 package io.mcp.random.service;
 
+import io.mcp.core.base.BaseMcpService;
 import io.mcp.random.tool.GenerateRandom;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 
-public class RandomService {
+public class RandomService extends BaseMcpService{
 
     private final GenerateRandom generateRandom = new GenerateRandom();
 
+    @Override
     public Implementation getServerInfo() {
         Implementation result = new Implementation("mcp-random-server", "1.0.0");
         return result;
