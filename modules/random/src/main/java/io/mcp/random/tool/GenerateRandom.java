@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Random;
 
 import io.mcp.core.base.BaseMcpTool;
-import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -60,21 +59,5 @@ public class GenerateRandom extends BaseMcpTool {
                 .build();
     }
 
-    @Override
-    public McpServerFeatures.SyncToolSpecification getToolSpecification() {
-       
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(getTool())
-                .callHandler((exchange, request) -> {
-                    try {
-                        return call(exchange, request);
-                    } catch (Exception e) {
-                        return McpSchema.CallToolResult.builder()
-                                .addTextContent(e.getMessage())
-                                .isError(true)
-                                .build();
-                    }
-                })
-                .build();
-    }
+
 }
