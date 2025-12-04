@@ -12,4 +12,5 @@ public interface McpTool {
     public McpSchema.Tool getTool();
     public McpServerFeatures.SyncToolSpecification getToolSpecification();
     public CallToolResult call(McpSyncServerExchange exchange, CallToolRequest request);
+    public String getName();
 }

@@ -13,8 +13,15 @@ public class GenerateRandom extends BaseMcpTool {
 
     private static final Random random = new Random();
 
+
+    @Override
+    public String getName() {
+        return "generateRandom";
+    }
+
+
     private String makePrefix() {
-        return "V6-HOT-RELOADED-";
+        return "V6-";
     }
 
     @Override
@@ -31,6 +38,8 @@ public class GenerateRandom extends BaseMcpTool {
                 .isError(false)
                 .build();
     }
+    
+
 
     @Override
     public McpSchema.JsonSchema getInputSchema() {
@@ -50,10 +59,11 @@ public class GenerateRandom extends BaseMcpTool {
         return inputSchema;
     }
 
+
     @Override
     public McpSchema.Tool getTool() {
         return McpSchema.Tool.builder()
-                .name("generateRandom")
+                .name(getName())
                 .description("Generates a random integer between 0 (inclusive) and the specified bound (exclusive)")
                 .inputSchema(getInputSchema())
                 .build();
