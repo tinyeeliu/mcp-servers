@@ -8,6 +8,8 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+./scripts/build_module.sh $1
+
 MODULE_NAME=$1
 MODULE_PATH="modules/${MODULE_NAME}"
 JAR_FILE="$MODULE_PATH/target/mcp-${MODULE_NAME}-1.0.0-SNAPSHOT.jar"

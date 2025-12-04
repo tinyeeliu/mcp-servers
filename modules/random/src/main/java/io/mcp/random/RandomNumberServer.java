@@ -56,25 +56,25 @@ public class RandomNumberServer {
                 .inputSchema(inputSchema)
                 .build();
 
-        return new McpServerFeatures.SyncToolSpecification(
-                tool,
-                (exchange, arguments) -> {
-                    int bound = ((Number) arguments.get("bound")).intValue();
-                    
+        return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(tool)
+                .callHandler((exchange, request) -> {
+                    int bound = ((Number) request.arguments().get("bound")).intValue();
+
                     if (bound <= 0) {
                         return McpSchema.CallToolResult.builder()
                                 .addTextContent("Error: bound must be a positive integer")
                                 .isError(true)
                                 .build();
                     }
-                    
+
                     int result = random.nextInt(bound);
-                    
+
                     return McpSchema.CallToolResult.builder()
                             .addTextContent(String.valueOf(result))
                             .isError(false)
                             .build();
-                }
-        );
+                })
+                .build();
     }
 }
