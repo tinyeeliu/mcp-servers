@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -61,7 +62,8 @@ public class McpHttpServer {
         // Messages endpoint - client sends requests here
         httpServer.createContext("/messages", this::handleSseMessage);
         
-        httpServer.setExecutor(null);
+        // Use virtual threads for concurrent SSE connections
+        httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
         System.out.println("MCP SSE Server running on http://localhost:" + port);
         System.out.println("  SSE endpoint: http://localhost:" + port + "/sse");
@@ -84,7 +86,8 @@ public class McpHttpServer {
         // Single endpoint for streamable HTTP
         httpServer.createContext("/mcp", this::handleStreamableRequest);
         
-        httpServer.setExecutor(null);
+        // Use virtual threads for concurrent connections
+        httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
         System.out.println("MCP Streamable HTTP Server running on http://localhost:" + port + "/mcp");
     }
@@ -102,7 +105,8 @@ public class McpHttpServer {
         httpServer.createContext("/sse", this::handleSseConnection);
         httpServer.createContext("/messages", this::handleSseMessage);
         
-        httpServer.setExecutor(null);
+        // Use virtual threads for concurrent connections
+        httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
         System.out.println("MCP HTTP Server running on http://localhost:" + port);
         System.out.println("  Streamable endpoint: http://localhost:" + port + "/mcp");
@@ -283,7 +287,7 @@ public class McpHttpServer {
 
         SseSession session = sseSessions.get(sessionId);
         if (session == null) {
-            sendError(exchange, 404, "Session not found");
+            sendError(exchange, 404, "Session not found: " + sessionId);
             return;
         }
 
@@ -294,8 +298,10 @@ public class McpHttpServer {
             // Process the request
             String response = mcpServer.handleRequestSync(requestBody, sessionId);
 
-            // Send response via SSE stream
-            session.sendMessage(response);
+            // Send response via SSE stream (null means notification - no response needed)
+            if (response != null) {
+                session.sendMessage(response);
+            }
 
             // Send accepted response to POST request
             exchange.getResponseHeaders().set("Content-Type", "application/json");

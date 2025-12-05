@@ -85,6 +85,11 @@ public class StreamableServer {
             JsonNode request = objectMapper.readTree(requestBody);
             return processJsonRpcRequest(request, sessionId)
                     .thenApply(response -> {
+                        // Notifications return null - no response should be sent
+                        if (response == null) {
+                            debug("<<< Response: (none - notification)");
+                            return null;
+                        }
                         try {
                             String responseStr = objectMapper.writeValueAsString(response);
                             debug("<<< Response:", responseStr);
@@ -202,8 +207,8 @@ public class StreamableServer {
                     debug("    Handling ping request");
                     yield CompletableFuture.completedFuture(handlePing(id));
                 }
-                case "notifications/cancelled" -> {
-                    debug("    Handling notifications/cancelled");
+                case "notifications/cancelled", "notifications/initialized" -> {
+                    debug("    Handling notification:", method);
                     yield CompletableFuture.completedFuture(handleNotification());
                 }
                 default -> {
