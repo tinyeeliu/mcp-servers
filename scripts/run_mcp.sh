@@ -25,7 +25,7 @@ fi
 cd "$(dirname "$0")/.." || exit 1
 
 # Build and run packaged JAR
-./scripts/build_module.sh $MODULE_NAME
+./scripts/build_module.sh
 
 if [ ! -f "$JAR_FILE" ]; then
     echo "Error: JAR file not found: $JAR_FILE"

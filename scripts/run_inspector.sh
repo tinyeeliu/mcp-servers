@@ -30,7 +30,7 @@ kill -9 $(lsof -ti:6277 2>/dev/null) 2>/dev/null || true
 cd "$(dirname "$0")/.." || exit 1
 
 # Build and run packaged JAR
-./scripts/build_module.sh $MODULE_NAME
+./scripts/build_module.sh
 
 if [ ! -f "$JAR_FILE" ]; then
     echo "Error: JAR file not found: $JAR_FILE"

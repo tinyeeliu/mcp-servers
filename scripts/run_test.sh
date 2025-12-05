@@ -14,7 +14,7 @@ TEST_CLASS=$2
 MODULE_PATH="modules/${MODULE_NAME}"
 
 # Build and run packaged JAR
-./scripts/build_module.sh $MODULE_NAME
+./scripts/build_module.sh
 
 # Change to project root directory
 cd "$(dirname "$0")/.." || exit 1
