@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +43,7 @@ public class StreamableServer {
     private final ObjectMapper objectMapper;
     private McpService mcpService;
     private Map<String, McpServerFeatures.AsyncToolSpecification> toolMap;
+    private Map<String, McpServerFeatures.AsyncPromptSpecification> promptMap;
     
     // Session management for stateful connections
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
@@ -62,13 +64,20 @@ public class StreamableServer {
         debug("StreamableServer.initialize() - Starting initialization");
         this.mcpService = mcpService;
         this.toolMap = new HashMap<>();
-        
+        this.promptMap = new HashMap<>();
+
         for (McpTool tool : mcpService.getTools()) {
             var spec = tool.getToolSpecification();
             toolMap.put(spec.tool().name(), spec);
             debug("  Registered tool:", spec.tool().name());
         }
-        debug("StreamableServer.initialize() - Completed with", toolMap.size(), "tools");
+
+        for (McpServerFeatures.AsyncPromptSpecification spec : mcpService.getPromptSpecifications()) {
+            promptMap.put(spec.prompt().name(), spec);
+            debug("  Registered prompt:", spec.prompt().name());
+        }
+
+        debug("StreamableServer.initialize() - Completed with", toolMap.size(), "tools and", promptMap.size(), "prompts");
     }
 
     /**
@@ -203,6 +212,14 @@ public class StreamableServer {
                     debug("    Handling tools/call request - params:", params);
                     yield handleToolsCall(params, id);
                 }
+                case "prompts/list" -> {
+                    debug("    Handling prompts/list request");
+                    yield CompletableFuture.completedFuture(handlePromptsList(id));
+                }
+                case "prompts/get" -> {
+                    debug("    Handling prompts/get request - params:", params);
+                    yield handlePromptsGet(params, id);
+                }
                 case "ping" -> {
                     debug("    Handling ping request");
                     yield CompletableFuture.completedFuture(handlePing(id));
@@ -242,6 +259,8 @@ public class StreamableServer {
         ObjectNode capabilities = objectMapper.createObjectNode();
         ObjectNode tools = objectMapper.createObjectNode();
         capabilities.set("tools", tools);
+        ObjectNode prompts = objectMapper.createObjectNode();
+        capabilities.set("prompts", prompts);
         result.set("capabilities", capabilities);
         
         debug("    Initialize response prepared");
@@ -346,6 +365,117 @@ public class StreamableServer {
             resultNode.put("isError", result.isError());
         }
         
+        return createSuccessResponseNode(id, resultNode);
+    }
+
+    private JsonNode handlePromptsList(JsonNode id) {
+        debug("    Listing", mcpService.getPromptSpecifications().size(), "prompts");
+
+        ObjectNode result = objectMapper.createObjectNode();
+        var promptsArray = objectMapper.createArrayNode();
+
+        for (McpServerFeatures.AsyncPromptSpecification spec : mcpService.getPromptSpecifications()) {
+            var prompt = spec.prompt();
+            ObjectNode promptNode = objectMapper.createObjectNode();
+            promptNode.put("name", prompt.name());
+            promptNode.put("description", prompt.description());
+
+            // Convert arguments to JSON
+            var argumentsArray = objectMapper.createArrayNode();
+            for (var arg : prompt.arguments()) {
+                ObjectNode argNode = objectMapper.createObjectNode();
+                argNode.put("name", arg.name());
+                argNode.put("description", arg.description());
+                argNode.put("required", arg.required());
+                argumentsArray.add(argNode);
+            }
+            promptNode.set("arguments", argumentsArray);
+
+            debug("      Prompt:", prompt.name(), "-", prompt.description());
+            promptsArray.add(promptNode);
+        }
+
+        result.set("prompts", promptsArray);
+        debug("    prompts/list response prepared");
+        return createSuccessResponseNode(id, result);
+    }
+
+    private CompletableFuture<JsonNode> handlePromptsGet(JsonNode params, JsonNode id) {
+        String promptName = params.path("name").asText();
+
+        debug("    Prompt get - name:", promptName);
+
+        McpServerFeatures.AsyncPromptSpecification spec = promptMap.get(promptName);
+        if (spec == null) {
+            debug("!!! Unknown prompt:", promptName, "- Available prompts:", promptMap.keySet());
+            return CompletableFuture.completedFuture(
+                    createErrorResponseNode(id, -32602, "Unknown prompt: " + promptName));
+        }
+
+        try {
+            // For now, implement a basic prompt handler that returns prompt information
+            // In a real implementation, this would call the actual prompt logic
+            var prompt = spec.prompt();
+            StringBuilder content = new StringBuilder();
+            content.append("Prompt: ").append(prompt.name()).append("\n");
+            content.append("Description: ").append(prompt.description()).append("\n");
+
+            if (!prompt.arguments().isEmpty()) {
+                content.append("Arguments:\n");
+                for (McpSchema.PromptArgument arg : prompt.arguments()) {
+                    content.append("- ").append(arg.name()).append(": ").append(arg.description());
+                    if (arg.required()) {
+                        content.append(" (required)");
+                    }
+                    content.append("\n");
+                }
+            }
+
+            McpSchema.GetPromptResult result = new McpSchema.GetPromptResult(
+                prompt.description(),
+                List.of(new McpSchema.PromptMessage(
+                    McpSchema.Role.USER,
+                    new McpSchema.TextContent(content.toString())
+                ))
+            );
+
+            debug("    Prompt", promptName, "completed successfully");
+            return CompletableFuture.completedFuture(createPromptResultResponse(id, result));
+
+        } catch (Exception e) {
+            debug("!!! Exception during prompt get:", e.getMessage());
+            e.printStackTrace(System.err);
+            return CompletableFuture.completedFuture(
+                    createErrorResponseNode(id, -32603, "Prompt execution error: " + e.getMessage()));
+        }
+    }
+
+    private JsonNode createPromptResultResponse(JsonNode id, McpSchema.GetPromptResult result) {
+        ObjectNode resultNode = objectMapper.createObjectNode();
+        resultNode.put("description", result.description());
+
+        var messagesArray = objectMapper.createArrayNode();
+        for (var message : result.messages()) {
+            ObjectNode messageNode = objectMapper.createObjectNode();
+            messageNode.put("role", message.role().toString().toLowerCase());
+
+            var contentArray = objectMapper.createArrayNode();
+            var content = message.content();
+            ObjectNode contentNode = objectMapper.createObjectNode();
+            if (content instanceof McpSchema.TextContent textContent) {
+                contentNode.put("type", "text");
+                contentNode.put("text", textContent.text());
+            } else if (content instanceof McpSchema.ImageContent imageContent) {
+                contentNode.put("type", "image");
+                contentNode.put("data", imageContent.data());
+                contentNode.put("mimeType", imageContent.mimeType());
+            }
+            contentArray.add(contentNode);
+            messageNode.set("content", contentArray);
+            messagesArray.add(messageNode);
+        }
+
+        resultNode.set("messages", messagesArray);
         return createSuccessResponseNode(id, resultNode);
     }
 
