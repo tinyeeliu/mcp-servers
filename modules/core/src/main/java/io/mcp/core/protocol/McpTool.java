@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpServerFeatures.AsyncResourceTemplateSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -19,4 +20,5 @@ public interface McpTool {
     public CompletableFuture<CallToolResult> call(McpAsyncServerExchange exchange, CallToolRequest request);
     public String getName();
     public List<McpServerFeatures.AsyncResourceSpecification> getResourceSpecifications();
+    public List<AsyncResourceTemplateSpecification> getResourceTemplateSpecifications();
 }

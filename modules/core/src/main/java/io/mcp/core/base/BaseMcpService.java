@@ -19,7 +19,7 @@ public abstract class BaseMcpService implements McpService {
         }
         return allPromptSpecifications;
     }
-    
+
     @Override
     public List<McpServerFeatures.AsyncResourceSpecification> getResourceSpecifications(){
         List<McpTool> tools = getTools();
@@ -29,5 +29,16 @@ public abstract class BaseMcpService implements McpService {
             allResourceSpecifications.addAll(resourceSpecifications);
         }
         return allResourceSpecifications;
+    }
+
+    @Override
+    public List<McpServerFeatures.AsyncResourceTemplateSpecification> getResourceTemplateSpecifications(){
+        List<McpTool> tools = getTools();
+        List<McpServerFeatures.AsyncResourceTemplateSpecification> allResourceTemplateSpecifications = new ArrayList<>();
+        for (McpTool tool : tools) {
+            List<McpServerFeatures.AsyncResourceTemplateSpecification> resourceTemplateSpecifications = tool.getResourceTemplateSpecifications();
+            allResourceTemplateSpecifications.addAll(resourceTemplateSpecifications);
+        }
+        return allResourceTemplateSpecifications;
     }
 }

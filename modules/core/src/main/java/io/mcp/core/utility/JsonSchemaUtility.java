@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpServerFeatures.AsyncResourceTemplateSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import reactor.core.publisher.Mono;
 
@@ -192,7 +193,7 @@ public class JsonSchemaUtility {
     }
 
 
-    public static List<McpServerFeatures.AsyncTemplateSpecification> getTemplates(JsonNode jsonNode) throws IOException {
+    public static List<AsyncResourceTemplateSpecification> getTemplates(JsonNode jsonNode) throws IOException {
 //
     }
 }

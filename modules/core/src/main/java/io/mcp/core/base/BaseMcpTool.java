@@ -71,4 +71,15 @@ public abstract class BaseMcpTool implements McpTool {
             throw new RuntimeException("Failed to load resource specification", e);
         }
     }
+
+    @Override
+    public List<McpServerFeatures.AsyncResourceTemplateSpecification> getResourceTemplateSpecifications() {
+        try {
+            String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/template/" + getName() + ".json");
+            JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
+            return JsonSchemaUtility.getTemplates(jsonNode);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load resource template specification", e);
+        }
+    }
 }
