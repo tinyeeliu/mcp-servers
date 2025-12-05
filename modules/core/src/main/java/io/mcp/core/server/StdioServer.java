@@ -35,6 +35,8 @@ public class StdioServer {
 
         List<McpServerFeatures.AsyncResourceSpecification> resourceSpecifications = mcpService.getResourceSpecifications();
 
+        List<McpServerFeatures.AsyncResourceTemplateSpecification> templateSpecifications = mcpService.getResourceTemplateSpecifications();
+
         McpAsyncServer server = McpServer.async(transportProvider)
                 .serverInfo(mcpService.getServerInfo())
                 .capabilities(McpSchema.ServerCapabilities.builder()
@@ -45,6 +47,7 @@ public class StdioServer {
                 .tools(toolSpecifications)
                 .prompts(promptSpecifications)
                 .resources(resourceSpecifications)
+                .resourceTemplates(templateSpecifications)
                 .build();
 
         // Add shutdown hook for graceful shutdown

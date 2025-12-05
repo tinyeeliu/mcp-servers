@@ -45,6 +45,7 @@ public class StreamableServer {
     private Map<String, McpServerFeatures.AsyncToolSpecification> toolMap;
     private Map<String, McpServerFeatures.AsyncPromptSpecification> promptMap;
     private Map<String, McpServerFeatures.AsyncResourceSpecification> resourceMap;
+    private Map<String, McpServerFeatures.AsyncResourceTemplateSpecification> templateMap;
     
     // Session management for stateful connections
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
@@ -67,6 +68,7 @@ public class StreamableServer {
         this.toolMap = new HashMap<>();
         this.promptMap = new HashMap<>();
         this.resourceMap = new HashMap<>();
+        this.templateMap = new HashMap<>();
 
         for (McpTool tool : mcpService.getTools()) {
             var spec = tool.getToolSpecification();
@@ -84,7 +86,12 @@ public class StreamableServer {
             debug("  Registered resource:", spec.resource().uri());
         }
 
-        debug("StreamableServer.initialize() - Completed with", toolMap.size(), "tools,", promptMap.size(), "prompts, and", resourceMap.size(), "resources");
+        for (McpServerFeatures.AsyncResourceTemplateSpecification spec : mcpService.getResourceTemplateSpecifications()) {
+            templateMap.put(spec.resourceTemplate().name(), spec);
+            debug("  Registered template:", spec.resourceTemplate().name());
+        }
+
+        debug("StreamableServer.initialize() - Completed with", toolMap.size(), "tools,", promptMap.size(), "prompts,", resourceMap.size(), "resources, and", templateMap.size(), "templates");
     }
 
     /**
@@ -235,6 +242,14 @@ public class StreamableServer {
                     debug("    Handling resources/read request - params:", params);
                     yield handleResourcesRead(params, id);
                 }
+                case "resources/templates/list" -> {
+                    debug("    Handling resources/templates/list request");
+                    yield CompletableFuture.completedFuture(handleTemplatesList(id));
+                }
+                case "resources/templates/read" -> {
+                    debug("    Handling resources/templates/read request - params:", params);
+                    yield handleTemplatesRead(params, id);
+                }
                 case "ping" -> {
                     debug("    Handling ping request");
                     yield CompletableFuture.completedFuture(handlePing(id));
@@ -278,6 +293,8 @@ public class StreamableServer {
         capabilities.set("prompts", prompts);
         ObjectNode resources = objectMapper.createObjectNode();
         capabilities.set("resources", resources);
+        ObjectNode resourceTemplates = objectMapper.createObjectNode();
+        capabilities.set("resourceTemplates", resourceTemplates);
         result.set("capabilities", capabilities);
         
         debug("    Initialize response prepared");
@@ -490,6 +507,29 @@ public class StreamableServer {
         return createSuccessResponseNode(id, result);
     }
 
+    private JsonNode handleTemplatesList(JsonNode id) {
+        debug("    Listing", mcpService.getResourceTemplateSpecifications().size(), "templates");
+
+        ObjectNode result = objectMapper.createObjectNode();
+        var templatesArray = objectMapper.createArrayNode();
+
+        for (McpServerFeatures.AsyncResourceTemplateSpecification spec : mcpService.getResourceTemplateSpecifications()) {
+            var template = spec.resourceTemplate();
+            ObjectNode templateNode = objectMapper.createObjectNode();
+            templateNode.put("uriTemplate", template.uriTemplate());
+            templateNode.put("name", template.name());
+            templateNode.put("description", template.description());
+            templateNode.put("mimeType", template.mimeType());
+
+            debug("      Template:", template.name(), "-", template.uriTemplate());
+            templatesArray.add(templateNode);
+        }
+
+        result.set("resourceTemplates", templatesArray);
+        debug("    resources/templates/list response prepared");
+        return createSuccessResponseNode(id, result);
+    }
+
     private CompletableFuture<JsonNode> handleResourcesRead(JsonNode params, JsonNode id) {
         String uri = params.path("uri").asText();
 
@@ -525,6 +565,55 @@ public class StreamableServer {
             e.printStackTrace(System.err);
             return CompletableFuture.completedFuture(
                     createErrorResponseNode(id, -32603, "Resource read error: " + e.getMessage()));
+        }
+    }
+
+    private CompletableFuture<JsonNode> handleTemplatesRead(JsonNode params, JsonNode id) {
+        String uri = params.path("uri").asText();
+
+        debug("    Template read - uri:", uri);
+
+        // Find template that matches the URI
+        McpServerFeatures.AsyncResourceTemplateSpecification spec = null;
+        for (McpServerFeatures.AsyncResourceTemplateSpecification templateSpec : templateMap.values()) {
+            // Simple pattern matching - in a real implementation, this would be more sophisticated
+            // For now, we'll check if the URI starts with the template pattern
+            String uriTemplate = templateSpec.resourceTemplate().uriTemplate();
+            if (uri.startsWith(uriTemplate.replace("{", "").replace("}", "").replace("*", ""))) {
+                spec = templateSpec;
+                break;
+            }
+        }
+
+        if (spec == null) {
+            debug("!!! No template matches uri:", uri, "- Available templates:", templateMap.keySet());
+            return CompletableFuture.completedFuture(
+                    createErrorResponseNode(id, -32602, "No template matches URI: " + uri));
+        }
+
+        try {
+            // Create ReadResourceRequest
+            McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest(uri);
+            debug("    Invoking template handler for:", uri, "using template:", spec.resourceTemplate().name());
+
+            return spec.readHandler().apply(null, request)
+                    .toFuture()
+                    .thenApply(result -> {
+                        debug("    Template", uri, "read successfully");
+                        debug("    Template result contents count:", result.contents().size());
+                        return createResourceResultResponse(id, result);
+                    })
+                    .exceptionally(e -> {
+                        debug("!!! Template read error for", uri, ":", e.getMessage());
+                        e.printStackTrace(System.err);
+                        return createErrorResponseNode(id, -32603,
+                                "Template read error: " + e.getMessage());
+                    });
+        } catch (Exception e) {
+            debug("!!! Exception during template read setup:", e.getMessage());
+            e.printStackTrace(System.err);
+            return CompletableFuture.completedFuture(
+                    createErrorResponseNode(id, -32603, "Template read error: " + e.getMessage()));
         }
     }
 
