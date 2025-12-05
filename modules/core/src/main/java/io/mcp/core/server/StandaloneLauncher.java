@@ -5,7 +5,7 @@ import java.io.IOException;
 import io.mcp.core.protocol.McpService;
 
 
-public class StandaloneServer {
+public class StandaloneLauncher {
     
 
     /*
