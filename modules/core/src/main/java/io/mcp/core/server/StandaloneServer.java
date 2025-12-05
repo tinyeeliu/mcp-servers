@@ -30,7 +30,7 @@ public class StandaloneServer {
         if (transport.equals("stdio")) {
             StdioServer stdioServer = new StdioServer();
             stdioServer.start(service);
-        } else if (transport.equals("http")) {
+        } else if (transport.equals("stream")) {
             // Streamable HTTP transport
             StreamableServer mcpServer = new StreamableServer();
             mcpServer.initialize(service);
@@ -44,7 +44,7 @@ public class StandaloneServer {
             
             McpHttpServer httpServer = new McpHttpServer(mcpServer);
             httpServer.startSseServer();
-        } else if (transport.equals("http-all")) {
+        } else if (transport.equals("http")) {
             // Both SSE and Streamable HTTP
             StreamableServer mcpServer = new StreamableServer();
             mcpServer.initialize(service);
