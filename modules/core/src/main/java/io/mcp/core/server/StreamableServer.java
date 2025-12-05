@@ -44,6 +44,7 @@ public class StreamableServer {
     private McpService mcpService;
     private Map<String, McpServerFeatures.AsyncToolSpecification> toolMap;
     private Map<String, McpServerFeatures.AsyncPromptSpecification> promptMap;
+    private Map<String, McpServerFeatures.AsyncResourceSpecification> resourceMap;
     
     // Session management for stateful connections
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
@@ -65,6 +66,7 @@ public class StreamableServer {
         this.mcpService = mcpService;
         this.toolMap = new HashMap<>();
         this.promptMap = new HashMap<>();
+        this.resourceMap = new HashMap<>();
 
         for (McpTool tool : mcpService.getTools()) {
             var spec = tool.getToolSpecification();
@@ -77,7 +79,12 @@ public class StreamableServer {
             debug("  Registered prompt:", spec.prompt().name());
         }
 
-        debug("StreamableServer.initialize() - Completed with", toolMap.size(), "tools and", promptMap.size(), "prompts");
+        for (McpServerFeatures.AsyncResourceSpecification spec : mcpService.getResourceSpecifications()) {
+            resourceMap.put(spec.resource().uri(), spec);
+            debug("  Registered resource:", spec.resource().uri());
+        }
+
+        debug("StreamableServer.initialize() - Completed with", toolMap.size(), "tools,", promptMap.size(), "prompts, and", resourceMap.size(), "resources");
     }
 
     /**
@@ -220,6 +227,14 @@ public class StreamableServer {
                     debug("    Handling prompts/get request - params:", params);
                     yield handlePromptsGet(params, id);
                 }
+                case "resources/list" -> {
+                    debug("    Handling resources/list request");
+                    yield CompletableFuture.completedFuture(handleResourcesList(id));
+                }
+                case "resources/read" -> {
+                    debug("    Handling resources/read request - params:", params);
+                    yield handleResourcesRead(params, id);
+                }
                 case "ping" -> {
                     debug("    Handling ping request");
                     yield CompletableFuture.completedFuture(handlePing(id));
@@ -261,6 +276,8 @@ public class StreamableServer {
         capabilities.set("tools", tools);
         ObjectNode prompts = objectMapper.createObjectNode();
         capabilities.set("prompts", prompts);
+        ObjectNode resources = objectMapper.createObjectNode();
+        capabilities.set("resources", resources);
         result.set("capabilities", capabilities);
         
         debug("    Initialize response prepared");
@@ -450,6 +467,67 @@ public class StreamableServer {
         }
     }
 
+    private JsonNode handleResourcesList(JsonNode id) {
+        debug("    Listing", mcpService.getResourceSpecifications().size(), "resources");
+
+        ObjectNode result = objectMapper.createObjectNode();
+        var resourcesArray = objectMapper.createArrayNode();
+
+        for (McpServerFeatures.AsyncResourceSpecification spec : mcpService.getResourceSpecifications()) {
+            var resource = spec.resource();
+            ObjectNode resourceNode = objectMapper.createObjectNode();
+            resourceNode.put("uri", resource.uri());
+            resourceNode.put("name", resource.name());
+            resourceNode.put("description", resource.description());
+            resourceNode.put("mimeType", resource.mimeType());
+
+            debug("      Resource:", resource.uri(), "-", resource.name());
+            resourcesArray.add(resourceNode);
+        }
+
+        result.set("resources", resourcesArray);
+        debug("    resources/list response prepared");
+        return createSuccessResponseNode(id, result);
+    }
+
+    private CompletableFuture<JsonNode> handleResourcesRead(JsonNode params, JsonNode id) {
+        String uri = params.path("uri").asText();
+
+        debug("    Resource read - uri:", uri);
+
+        McpServerFeatures.AsyncResourceSpecification spec = resourceMap.get(uri);
+        if (spec == null) {
+            debug("!!! Unknown resource:", uri, "- Available resources:", resourceMap.keySet());
+            return CompletableFuture.completedFuture(
+                    createErrorResponseNode(id, -32602, "Unknown resource: " + uri));
+        }
+
+        try {
+            // Create ReadResourceRequest
+            McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest(uri);
+            debug("    Invoking resource handler for:", uri);
+
+            return spec.readHandler().apply(null, request)
+                    .toFuture()
+                    .thenApply(result -> {
+                        debug("    Resource", uri, "read successfully");
+                        debug("    Resource result contents count:", result.contents().size());
+                        return createResourceResultResponse(id, result);
+                    })
+                    .exceptionally(e -> {
+                        debug("!!! Resource read error for", uri, ":", e.getMessage());
+                        e.printStackTrace(System.err);
+                        return createErrorResponseNode(id, -32603,
+                                "Resource read error: " + e.getMessage());
+                    });
+        } catch (Exception e) {
+            debug("!!! Exception during resource read setup:", e.getMessage());
+            e.printStackTrace(System.err);
+            return CompletableFuture.completedFuture(
+                    createErrorResponseNode(id, -32603, "Resource read error: " + e.getMessage()));
+        }
+    }
+
     private JsonNode createPromptResultResponse(JsonNode id, McpSchema.GetPromptResult result) {
         ObjectNode resultNode = objectMapper.createObjectNode();
         resultNode.put("description", result.description());
@@ -476,6 +554,24 @@ public class StreamableServer {
         }
 
         resultNode.set("messages", messagesArray);
+        return createSuccessResponseNode(id, resultNode);
+    }
+
+    private JsonNode createResourceResultResponse(JsonNode id, McpSchema.ReadResourceResult result) {
+        ObjectNode resultNode = objectMapper.createObjectNode();
+        var contentsArray = objectMapper.createArrayNode();
+
+        for (var content : result.contents()) {
+            ObjectNode contentNode = objectMapper.createObjectNode();
+            if (content instanceof McpSchema.TextResourceContents textContent) {
+                contentNode.put("uri", textContent.uri());
+                contentNode.put("mimeType", textContent.mimeType());
+                contentNode.put("text", textContent.text());
+            }
+            contentsArray.add(contentNode);
+        }
+
+        resultNode.set("contents", contentsArray);
         return createSuccessResponseNode(id, resultNode);
     }
 

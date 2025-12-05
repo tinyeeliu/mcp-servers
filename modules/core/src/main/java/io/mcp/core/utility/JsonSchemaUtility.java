@@ -143,6 +143,51 @@ public class JsonSchemaUtility {
     }
 
     public static List<McpServerFeatures.AsyncResourceSpecification> getResources(JsonNode jsonNode) throws IOException {
-        
+        List<McpServerFeatures.AsyncResourceSpecification> resourceSpecifications = new ArrayList<>();
+
+        if (!jsonNode.isArray()) {
+            throw new IOException("Resources JSON must be an array");
+        }
+
+        for (JsonNode resourceNode : jsonNode) {
+            String uri = resourceNode.get("uri").asText();
+            String name = resourceNode.get("name").asText();
+            String description = resourceNode.get("description").asText();
+            String mimeType = resourceNode.has("mimeType") ? resourceNode.get("mimeType").asText() : "text/plain";
+
+            // Create the Resource
+            McpSchema.Resource resource = McpSchema.Resource.builder()
+                .uri(uri)
+                .name(name)
+                .description(description)
+                .mimeType(mimeType)
+                .build();
+
+            // Create the AsyncResourceSpecification with a handler
+            // Note: This is a basic handler that returns placeholder content.
+            // In a real implementation, the handler logic should fetch actual resource content.
+            McpServerFeatures.AsyncResourceSpecification spec = new McpServerFeatures.AsyncResourceSpecification(
+                resource,
+                (exchange, request) -> {
+                    // Basic resource handler - returns placeholder content
+                    // In a real implementation, this would fetch the actual resource content
+                    String content = "Resource: " + name + "\nURI: " + uri + "\nDescription: " + description + "\n\n[This is placeholder content. Actual resource fetching should be implemented.]";
+
+                    McpSchema.TextResourceContents textContents = new McpSchema.TextResourceContents(
+                        uri,
+                        mimeType,
+                        content
+                    );
+
+                    return Mono.just(
+                        new McpSchema.ReadResourceResult(List.of(textContents))
+                    );
+                }
+            );
+
+            resourceSpecifications.add(spec);
+        }
+
+        return resourceSpecifications;
     }
 }
