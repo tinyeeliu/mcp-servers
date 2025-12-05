@@ -27,7 +27,7 @@ public class JsonSchemaUtility {
         String resourcePath = path.startsWith("/") ? path : "/" + path;
         InputStream inputStream = JsonSchemaUtility.class.getResourceAsStream(resourcePath);
         if (inputStream == null) {
-            throw new RuntimeException("Resource not found: " + resourcePath);
+            return null;
         }
         return new String(inputStream.readAllBytes());
     }

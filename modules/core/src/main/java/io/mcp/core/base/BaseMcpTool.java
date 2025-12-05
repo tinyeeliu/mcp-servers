@@ -1,6 +1,7 @@
 package io.mcp.core.base;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,6 +53,9 @@ public abstract class BaseMcpTool implements McpTool {
 
         try {
             String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/prompt/" + getName() + ".json");
+            if (jsonSchema == null) {
+                return new ArrayList<>();
+            }
             JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
             return JsonSchemaUtility.getPrompts(jsonNode);
         } catch (IOException e) {
@@ -65,6 +69,9 @@ public abstract class BaseMcpTool implements McpTool {
     public List<McpServerFeatures.AsyncResourceSpecification> getResourceSpecifications() {
         try {
             String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/resource/" + getName() + ".json");
+            if (jsonSchema == null) {
+                return new ArrayList<>();
+            }
             JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
             return JsonSchemaUtility.getResources(jsonNode);
         } catch (IOException e) {
@@ -76,6 +83,9 @@ public abstract class BaseMcpTool implements McpTool {
     public List<McpServerFeatures.AsyncResourceTemplateSpecification> getResourceTemplateSpecifications() {
         try {
             String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/template/" + getName() + ".json");
+            if (jsonSchema == null) {
+                return new ArrayList<>();
+            }
             JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
             return JsonSchemaUtility.getTemplates(jsonNode);
         } catch (IOException e) {
