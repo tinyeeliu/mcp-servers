@@ -141,4 +141,8 @@ public class JsonSchemaUtility {
 
         return promptSpecifications;
     }
+
+    public static List<McpServerFeatures.AsyncResourceSpecification> getResources(JsonNode jsonNode) throws IOException {
+        
+    }
 }
