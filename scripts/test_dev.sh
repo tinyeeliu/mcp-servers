@@ -10,7 +10,6 @@ fi
 
 MODULE_NAME=$1
 MODULE_PATH="modules/${MODULE_NAME}"
-JAR_FILE="$MODULE_PATH/target/mcp-${MODULE_NAME}-1.0.0-SNAPSHOT.jar"
 
 if [ ! -d "$MODULE_PATH" ]; then
     echo "Error: Module '$MODULE_NAME' not found at $MODULE_PATH"
