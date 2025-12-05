@@ -24,11 +24,16 @@ fi
 echo "Running tests for module: $MODULE_NAME"
 echo ""
 
+# Common Maven options:
+# -Dsurefire.useFile=false : Print test output to console instead of files
+# This allows debug logs (written to stderr) to be visible
+MAVEN_OPTS="-Dsurefire.useFile=false"
+
 # Run tests with optional test class filter
 if [ -n "$TEST_CLASS" ]; then
     echo "Running specific test: $TEST_CLASS"
-    mvn test -pl "$MODULE_PATH" -Dtest="$TEST_CLASS"
+    mvn test -pl "$MODULE_PATH" -Dtest="$TEST_CLASS" $MAVEN_OPTS
 else
     echo "Running all tests in module"
-    mvn test -pl "$MODULE_PATH"
+    mvn test -pl "$MODULE_PATH" $MAVEN_OPTS
 fi
