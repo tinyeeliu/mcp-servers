@@ -626,7 +626,6 @@ public class StreamableServer {
             ObjectNode messageNode = objectMapper.createObjectNode();
             messageNode.put("role", message.role().toString().toLowerCase());
 
-            var contentArray = objectMapper.createArrayNode();
             var content = message.content();
             ObjectNode contentNode = objectMapper.createObjectNode();
             if (content instanceof McpSchema.TextContent textContent) {
@@ -637,8 +636,7 @@ public class StreamableServer {
                 contentNode.put("data", imageContent.data());
                 contentNode.put("mimeType", imageContent.mimeType());
             }
-            contentArray.add(contentNode);
-            messageNode.set("content", contentArray);
+            messageNode.set("content", contentNode);
             messagesArray.add(messageNode);
         }
 
