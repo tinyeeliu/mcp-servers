@@ -33,14 +33,18 @@ public class StdioServer {
 
         List<McpServerFeatures.AsyncPromptSpecification> promptSpecifications = mcpService.getPromptSpecifications();
 
+        List<McpServerFeatures.AsyncResourceSpecification> resourceSpecifications = mcpService.getResourceSpecifications();
+
         McpAsyncServer server = McpServer.async(transportProvider)
                 .serverInfo(mcpService.getServerInfo())
                 .capabilities(McpSchema.ServerCapabilities.builder()
                         .tools(true)
                         .prompts(true)
+                        .resources(true, false)
                         .build())
                 .tools(toolSpecifications)
                 .prompts(promptSpecifications)
+                .resources(resourceSpecifications)
                 .build();
 
         // Add shutdown hook for graceful shutdown
