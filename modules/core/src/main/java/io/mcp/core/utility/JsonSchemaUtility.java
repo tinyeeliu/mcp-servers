@@ -194,6 +194,52 @@ public class JsonSchemaUtility {
 
 
     public static List<AsyncResourceTemplateSpecification> getTemplates(JsonNode jsonNode) throws IOException {
-//
+        List<AsyncResourceTemplateSpecification> templateSpecifications = new ArrayList<>();
+
+        if (!jsonNode.isArray()) {
+            throw new IOException("Templates JSON must be an array");
+        }
+
+        for (JsonNode templateNode : jsonNode) {
+            String uriTemplate = templateNode.get("uriTemplate").asText();
+            String name = templateNode.get("name").asText();
+            String title = templateNode.has("title") ? templateNode.get("title").asText() : name;
+            String description = templateNode.get("description").asText();
+            String mimeType = templateNode.has("mimeType") ? templateNode.get("mimeType").asText() : "application/octet-stream";
+
+            // Create the ResourceTemplate
+            McpSchema.ResourceTemplate resourceTemplate = McpSchema.ResourceTemplate.builder()
+                .uriTemplate(uriTemplate)
+                .name(name)
+                .description(description)
+                .mimeType(mimeType)
+                .build();
+
+            // Create the AsyncResourceTemplateSpecification with a handler
+            // Note: This is a basic handler that returns placeholder content.
+            // In a real implementation, the handler logic should match template URIs and fetch actual content.
+            AsyncResourceTemplateSpecification spec = new AsyncResourceTemplateSpecification(
+                resourceTemplate,
+                (exchange, request) -> {
+                    // Basic template handler - returns placeholder content based on the template
+                    // In a real implementation, this would match the URI against the template and fetch content
+                    String content = "Template: " + title + "\nURI Template: " + uriTemplate + "\nDescription: " + description + "\n\n[This is placeholder content. Actual template matching and content fetching should be implemented.]";
+
+                    McpSchema.TextResourceContents textContents = new McpSchema.TextResourceContents(
+                        request.uri(),
+                        mimeType,
+                        content
+                    );
+
+                    return Mono.just(
+                        new McpSchema.ReadResourceResult(List.of(textContents))
+                    );
+                }
+            );
+
+            templateSpecifications.add(spec);
+        }
+
+        return templateSpecifications;
     }
 }
