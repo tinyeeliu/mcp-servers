@@ -2,12 +2,16 @@ package io.mcp.random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -15,9 +19,13 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.net.httpserver.HttpServer;
 
 import io.mcp.core.server.StreamableServer;
 import io.mcp.random.service.RandomService;
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
@@ -283,14 +291,92 @@ class RandomNumberServerTest {
     }
 
 
-    /*
-    
-    Use the official MCP 
-    
-    */
-
+    /**
+     * Test using the official MCP SDK's McpSyncClient with HTTP transport.
+     * 
+     * This test starts an embedded HTTP server, connects to it using
+     * HttpClientStreamableHttpTransport, and calls the generateRandom tool.
+     */
     @Test
     void testHttpTransportClientGenerateRandom() throws Exception {
+        // Set up the StreamableServer with RandomService
+        StreamableServer mcpServer = new StreamableServer();
+        RandomService service = new RandomService();
+        mcpServer.initialize(service);
 
+        // Start an embedded HTTP server on a random available port
+        HttpServer httpServer = HttpServer.create(new InetSocketAddress(0), 0);
+        int port = httpServer.getAddress().getPort();
+        
+        httpServer.createContext("/mcp", exchange -> {
+            if ("POST".equals(exchange.getRequestMethod())) {
+                String requestBody = new String(exchange.getRequestBody().readAllBytes());
+                String response = mcpServer.handleRequestSync(requestBody, null);
+                
+                exchange.getResponseHeaders().set("Content-Type", mcpServer.getContentType());
+                byte[] responseBytes = response.getBytes();
+                exchange.sendResponseHeaders(200, responseBytes.length);
+                exchange.getResponseBody().write(responseBytes);
+                exchange.getResponseBody().close();
+            } else {
+                exchange.sendResponseHeaders(405, -1);
+            }
+        });
+        httpServer.start();
+
+        McpSyncClient client = null;
+        try {
+            // Create HTTP transport pointing to our embedded server
+            HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport
+                    .builder("http://localhost:" + port)
+                    .endpoint("/mcp")
+                    .build();
+
+            // Create MCP sync client
+            client = McpClient.sync(transport)
+                    .requestTimeout(Duration.ofSeconds(10))
+                    .initializationTimeout(Duration.ofSeconds(10))
+                    .build();
+
+            // Initialize the client (performs handshake with server)
+            client.initialize();
+
+            // List available tools
+            McpSchema.ListToolsResult toolsResult = client.listTools();
+            assertNotNull(toolsResult, "Tools result should not be null");
+            assertFalse(toolsResult.tools().isEmpty(), "Should have at least one tool");
+
+            // Verify generateRandom tool is available
+            boolean hasGenerateRandom = toolsResult.tools().stream()
+                    .anyMatch(tool -> "generateRandom".equals(tool.name()));
+            assertTrue(hasGenerateRandom, "generateRandom tool should be available");
+
+            // Call the generateRandom tool
+            McpSchema.CallToolResult result = client.callTool(
+                    new McpSchema.CallToolRequest("generateRandom", Map.of("bound", 100)));
+
+            // Verify the result
+            assertNotNull(result, "Tool result should not be null");
+            assertFalse(result.content().isEmpty(), "Result should have content");
+
+            // Get the text content from the result
+            var content = result.content().get(0);
+            assertTrue(content instanceof McpSchema.TextContent, "Content should be TextContent");
+            
+            String textResult = ((McpSchema.TextContent) content).text();
+            int randomNumber = Integer.parseInt(textResult);
+            assertTrue(randomNumber >= 0 && randomNumber < 100,
+                    "Random number should be between 0 and 100, got: " + randomNumber);
+
+            System.out.println("Generated random number: " + randomNumber);
+
+        } finally {
+            // Clean up resources
+            if (client != null) {
+                client.closeGracefully();
+            }
+            httpServer.stop(0);
+            mcpServer.shutdown();
+        }
     }
 }
