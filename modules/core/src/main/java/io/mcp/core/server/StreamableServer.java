@@ -410,6 +410,4 @@ public class StreamableServer {
     }
 
 
-    public void start(int port) throws IOException {
-    }
 }
