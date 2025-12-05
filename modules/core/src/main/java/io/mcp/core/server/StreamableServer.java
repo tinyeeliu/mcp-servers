@@ -1,5 +1,7 @@
 package io.mcp.core.server;
 
+import static io.mcp.core.utility.Utility.debug;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -57,13 +59,16 @@ public class StreamableServer {
      * Must be called before handling requests.
      */
     public void initialize(McpService mcpService) {
+        debug("StreamableServer.initialize() - Starting initialization");
         this.mcpService = mcpService;
         this.toolMap = new HashMap<>();
         
         for (McpTool tool : mcpService.getTools()) {
             var spec = tool.getToolSpecification();
             toolMap.put(spec.tool().name(), spec);
+            debug("  Registered tool:", spec.tool().name());
         }
+        debug("StreamableServer.initialize() - Completed with", toolMap.size(), "tools");
     }
 
     /**
@@ -74,17 +79,23 @@ public class StreamableServer {
      * @return CompletableFuture with the JSON-RPC response as a string
      */
     public CompletableFuture<String> handleRequest(String requestBody, String sessionId) {
+        debug(">>> handleRequest - sessionId:", sessionId);
+        debug(">>> Request body:", requestBody);
         try {
             JsonNode request = objectMapper.readTree(requestBody);
             return processJsonRpcRequest(request, sessionId)
                     .thenApply(response -> {
                         try {
-                            return objectMapper.writeValueAsString(response);
+                            String responseStr = objectMapper.writeValueAsString(response);
+                            debug("<<< Response:", responseStr);
+                            return responseStr;
                         } catch (Exception e) {
+                            debug("!!! Serialization error:", e.getMessage());
                             return createErrorResponse(null, -32603, "Serialization error: " + e.getMessage());
                         }
                     });
         } catch (Exception e) {
+            debug("!!! Parse error:", e.getMessage());
             return CompletableFuture.completedFuture(
                     createErrorResponse(null, -32700, "Parse error: " + e.getMessage()));
         }
@@ -167,24 +178,51 @@ public class StreamableServer {
             JsonNode params = request.path("params");
             JsonNode id = request.path("id");
             
+            debug("--- Processing JSON-RPC method:", method, "id:", id);
+            
             // Route to appropriate handler based on method
             return switch (method) {
-                case "initialize" -> CompletableFuture.completedFuture(handleInitialize(params, id));
-                case "initialized" -> CompletableFuture.completedFuture(handleInitialized(id));
-                case "tools/list" -> CompletableFuture.completedFuture(handleToolsList(id));
-                case "tools/call" -> handleToolsCall(params, id);
-                case "ping" -> CompletableFuture.completedFuture(handlePing(id));
-                case "notifications/cancelled" -> CompletableFuture.completedFuture(handleNotification());
-                default -> CompletableFuture.completedFuture(
-                        createErrorResponseNode(id, -32601, "Method not found: " + method));
+                case "initialize" -> {
+                    debug("    Handling initialize request");
+                    yield CompletableFuture.completedFuture(handleInitialize(params, id));
+                }
+                case "initialized" -> {
+                    debug("    Handling initialized notification");
+                    yield CompletableFuture.completedFuture(handleInitialized(id));
+                }
+                case "tools/list" -> {
+                    debug("    Handling tools/list request");
+                    yield CompletableFuture.completedFuture(handleToolsList(id));
+                }
+                case "tools/call" -> {
+                    debug("    Handling tools/call request - params:", params);
+                    yield handleToolsCall(params, id);
+                }
+                case "ping" -> {
+                    debug("    Handling ping request");
+                    yield CompletableFuture.completedFuture(handlePing(id));
+                }
+                case "notifications/cancelled" -> {
+                    debug("    Handling notifications/cancelled");
+                    yield CompletableFuture.completedFuture(handleNotification());
+                }
+                default -> {
+                    debug("!!! Unknown method:", method);
+                    yield CompletableFuture.completedFuture(
+                            createErrorResponseNode(id, -32601, "Method not found: " + method));
+                }
             };
         } catch (Exception e) {
+            debug("!!! Internal error in processJsonRpcRequest:", e.getMessage());
+            e.printStackTrace(System.err);
             return CompletableFuture.completedFuture(
                     createErrorResponseNode(request.path("id"), -32603, "Internal error: " + e.getMessage()));
         }
     }
 
     private JsonNode handleInitialize(JsonNode params, JsonNode id) {
+        debug("    Initialize params:", params);
+        
         ObjectNode result = objectMapper.createObjectNode();
         result.put("protocolVersion", "2024-11-05");
         
@@ -193,11 +231,15 @@ public class StreamableServer {
         serverInfo.put("version", mcpService.getServerInfo().version());
         result.set("serverInfo", serverInfo);
         
+        debug("    Server info - name:", mcpService.getServerInfo().name(), 
+              "version:", mcpService.getServerInfo().version());
+        
         ObjectNode capabilities = objectMapper.createObjectNode();
         ObjectNode tools = objectMapper.createObjectNode();
         capabilities.set("tools", tools);
         result.set("capabilities", capabilities);
         
+        debug("    Initialize response prepared");
         return createSuccessResponseNode(id, result);
     }
 
@@ -208,6 +250,8 @@ public class StreamableServer {
     }
 
     private JsonNode handleToolsList(JsonNode id) {
+        debug("    Listing", mcpService.getTools().size(), "tools");
+        
         ObjectNode result = objectMapper.createObjectNode();
         var toolsArray = objectMapper.createArrayNode();
         
@@ -217,11 +261,14 @@ public class StreamableServer {
             toolNode.put("name", spec.tool().name());
             toolNode.put("description", spec.tool().description());
             
+            debug("      Tool:", spec.tool().name(), "-", spec.tool().description());
+            
             try {
                 String schemaString = spec.tool().inputSchema().toString();
                 JsonNode inputSchema = objectMapper.readTree(schemaString);
                 toolNode.set("inputSchema", inputSchema);
             } catch (Exception e) {
+                debug("!!! Error parsing input schema for tool:", spec.tool().name(), "-", e.getMessage());
                 toolNode.putObject("inputSchema");
             }
             
@@ -229,6 +276,7 @@ public class StreamableServer {
         }
         
         result.set("tools", toolsArray);
+        debug("    tools/list response prepared");
         return createSuccessResponseNode(id, result);
     }
 
@@ -236,8 +284,12 @@ public class StreamableServer {
         String toolName = params.path("name").asText();
         JsonNode arguments = params.path("arguments");
         
+        debug("    Tool call - name:", toolName);
+        debug("    Tool call - arguments:", arguments);
+        
         McpServerFeatures.AsyncToolSpecification spec = toolMap.get(toolName);
         if (spec == null) {
+            debug("!!! Unknown tool:", toolName, "- Available tools:", toolMap.keySet());
             return CompletableFuture.completedFuture(
                     createErrorResponseNode(id, -32602, "Unknown tool: " + toolName));
         }
@@ -245,16 +297,28 @@ public class StreamableServer {
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> args = objectMapper.convertValue(arguments, Map.class);
+            debug("    Converted arguments:", args);
             
             // Create CallToolRequest for the tool handler
             CallToolRequest request = new CallToolRequest(toolName, args);
+            debug("    Invoking tool handler for:", toolName);
             
             return spec.callHandler().apply(null, request)
                     .toFuture()
-                    .thenApply(result -> createToolResultResponse(id, result))
-                    .exceptionally(e -> createErrorResponseNode(id, -32603, 
-                            "Tool execution error: " + e.getMessage()));
+                    .thenApply(result -> {
+                        debug("    Tool", toolName, "completed successfully");
+                        debug("    Tool result content count:", result.content().size());
+                        return createToolResultResponse(id, result);
+                    })
+                    .exceptionally(e -> {
+                        debug("!!! Tool execution error for", toolName, ":", e.getMessage());
+                        e.printStackTrace(System.err);
+                        return createErrorResponseNode(id, -32603, 
+                                "Tool execution error: " + e.getMessage());
+                    });
         } catch (Exception e) {
+            debug("!!! Exception during tool call setup:", e.getMessage());
+            e.printStackTrace(System.err);
             return CompletableFuture.completedFuture(
                     createErrorResponseNode(id, -32603, "Tool execution error: " + e.getMessage()));
         }
