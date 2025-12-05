@@ -17,6 +17,10 @@
     <name>MCP Random</name>
     <description>A simple MCP service that returns a random Long</description>
 
+    <properties>
+        <native.mainClass>io.mcp.random.RandomNumberServer</native.mainClass>
+    </properties>
+
     <dependencies>
 
 
@@ -77,6 +81,12 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+            </plugin>
+
         </plugins>
     </build>
 </project>
