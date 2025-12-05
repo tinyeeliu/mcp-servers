@@ -4,10 +4,18 @@
 
 if [ $# -lt 1 ] || [ $# -gt 2 ]; then
     echo "Usage: $0 <module_name> [transport]"
-    echo "Example: $0 random stdio"
-    echo "Example: $0 random http"
     echo ""
-    echo "Transports: stdio (default), http"
+    echo "Examples:"
+    echo "  $0 random stdio       - Run with stdio transport"
+    echo "  $0 random http        - Run with Streamable HTTP transport"
+    echo "  $0 random sse         - Run with SSE transport"
+    echo "  $0 random http-all    - Run with both SSE and Streamable HTTP"
+    echo ""
+    echo "Transports:"
+    echo "  stdio     - Standard I/O transport (default)"
+    echo "  http      - Streamable HTTP transport (POST /mcp)"
+    echo "  sse       - SSE transport (GET /sse + POST /messages)"
+    echo "  http-all  - Both SSE and Streamable HTTP"
     echo ""
     echo "Builds and runs the packaged JAR with MCP Inspector."
     exit 1
@@ -23,9 +31,10 @@ if [ ! -d "$MODULE_PATH" ]; then
     exit 1
 fi
 
-# Kill any existing processes on inspector ports
+# Kill any existing processes on inspector ports and MCP server port
 kill -9 $(lsof -ti:6274 2>/dev/null) 2>/dev/null || true
 kill -9 $(lsof -ti:6277 2>/dev/null) 2>/dev/null || true
+kill -9 $(lsof -ti:8080 2>/dev/null) 2>/dev/null || true
 
 cd "$(dirname "$0")/.." || exit 1
 
@@ -43,23 +52,57 @@ echo "Transport: $TRANSPORT"
 echo "JAR file: $JAR_FILE"
 echo ""
 
-if [ "$TRANSPORT" = "stdio" ]; then
-    npx @modelcontextprotocol/inspector@0.17.2 --transport stdio java --enable-preview -jar "$JAR_FILE" stdio 2>&1 | cat
-elif [ "$TRANSPORT" = "http" ]; then
-    # Start the server in background
-    java --enable-preview -jar "$JAR_FILE" http &
-    SERVER_PID=$!
+cleanup() {
+    if [ -n "$SERVER_PID" ]; then
+        echo "Stopping server (PID: $SERVER_PID)..."
+        kill $SERVER_PID 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
 
-    # Wait a moment for server to start
-    sleep 2
+case "$TRANSPORT" in
+    stdio)
+        npx @modelcontextprotocol/inspector@0.17.2 --transport stdio java --enable-preview -jar "$JAR_FILE" stdio 2>&1 | cat
+        ;;
+    http)
+        # Start the server in background with Streamable HTTP transport
+        java --enable-preview -jar "$JAR_FILE" http &
+        SERVER_PID=$!
+        echo "Started Streamable HTTP server (PID: $SERVER_PID)"
+        sleep 2
 
-    # Run inspector with streamable HTTP transport
-    npx @modelcontextprotocol/inspector@0.17.2 --transport streamable-http --url http://localhost:8080/mcp
+        # Run inspector with streamable HTTP transport
+        echo "Connecting inspector to http://localhost:8080/mcp"
+        npx @modelcontextprotocol/inspector@0.17.2 --transport streamable-http --url http://localhost:8080/mcp
+        ;;
+    sse)
+        # Start the server in background with SSE transport
+        java --enable-preview -jar "$JAR_FILE" sse &
+        SERVER_PID=$!
+        echo "Started SSE server (PID: $SERVER_PID)"
+        sleep 2
 
-    # Clean up server when inspector exits
-    kill $SERVER_PID 2>/dev/null || true
-else
-    echo "Error: Unsupported transport '$TRANSPORT'. Use 'stdio' or 'http'."
-    exit 1
-fi
+        # Run inspector with SSE transport
+        echo "Connecting inspector to http://localhost:8080/sse"
+        npx @modelcontextprotocol/inspector@0.17.2 --transport sse --url http://localhost:8080/sse
+        ;;
+    http-all)
+        # Start the server in background with both transports
+        java --enable-preview -jar "$JAR_FILE" http-all &
+        SERVER_PID=$!
+        echo "Started combined HTTP server (PID: $SERVER_PID)"
+        echo "  Streamable HTTP: http://localhost:8080/mcp"
+        echo "  SSE endpoint:    http://localhost:8080/sse"
+        sleep 2
 
+        # Default to Streamable HTTP for inspector
+        echo ""
+        echo "Connecting inspector to Streamable HTTP endpoint..."
+        npx @modelcontextprotocol/inspector@0.17.2 --transport streamable-http --url http://localhost:8080/mcp
+        ;;
+    *)
+        echo "Error: Unsupported transport '$TRANSPORT'."
+        echo "Use one of: stdio, http, sse, http-all"
+        exit 1
+        ;;
+esac
