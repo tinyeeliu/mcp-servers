@@ -268,14 +268,9 @@ public class StreamableServer {
             
             debug("      Tool:", spec.tool().name(), "-", spec.tool().description());
             
-            try {
-                String schemaString = spec.tool().inputSchema().toString();
-                JsonNode inputSchema = objectMapper.readTree(schemaString);
-                toolNode.set("inputSchema", inputSchema);
-            } catch (Exception e) {
-                debug("!!! Error parsing input schema for tool:", spec.tool().name(), "-", e.getMessage());
-                toolNode.putObject("inputSchema");
-            }
+            // Convert inputSchema object to JSON node directly (not via toString())
+            JsonNode inputSchema = objectMapper.valueToTree(spec.tool().inputSchema());
+            toolNode.set("inputSchema", inputSchema);
             
             toolsArray.add(toolNode);
         }
