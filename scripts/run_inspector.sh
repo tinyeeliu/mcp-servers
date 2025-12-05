@@ -62,7 +62,7 @@ trap cleanup EXIT
 
 case "$TRANSPORT" in
     stdio)
-        npx @modelcontextprotocol/inspector@0.17.2 --transport stdio java --enable-preview -jar "$JAR_FILE" stdio 2>&1 | cat
+        npx @modelcontextprotocol/inspector@0.16.7 --transport stdio java --enable-preview -jar "$JAR_FILE" stdio 2>&1 | cat
         ;;
     http)
         # Start the server in background with Streamable HTTP transport
@@ -73,7 +73,7 @@ case "$TRANSPORT" in
 
         # Run inspector with streamable HTTP transport
         echo "Connecting inspector to http://localhost:8080/mcp"
-        npx @modelcontextprotocol/inspector@0.17.2 --transport streamable-http --url http://localhost:8080/mcp
+        npx @modelcontextprotocol/inspector@0.16.7 --transport streamable-http --url http://localhost:8080/mcp
         ;;
     sse)
         # Start the server in background with SSE transport
@@ -84,7 +84,7 @@ case "$TRANSPORT" in
 
         # Run inspector with SSE transport
         echo "Connecting inspector to http://localhost:8080/sse"
-        npx @modelcontextprotocol/inspector@0.17.2 --transport sse --url http://localhost:8080/sse
+        npx @modelcontextprotocol/inspector@0.16.7 --transport sse --url http://localhost:8080/sse
         ;;
     http-all)
         # Start the server in background with both transports
@@ -98,7 +98,7 @@ case "$TRANSPORT" in
         # Default to Streamable HTTP for inspector
         echo ""
         echo "Connecting inspector to Streamable HTTP endpoint..."
-        npx @modelcontextprotocol/inspector@0.17.2 --transport streamable-http --url http://localhost:8080/mcp
+        npx @modelcontextprotocol/inspector@0.16.7 --transport streamable-http --url http://localhost:8080/mcp
         ;;
     *)
         echo "Error: Unsupported transport '$TRANSPORT'."
