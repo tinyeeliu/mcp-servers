@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -19,8 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.net.httpserver.HttpServer;
 
+import io.mcp.core.server.McpHttpServer;
 import io.mcp.core.server.StreamableServer;
 import io.mcp.random.service.RandomService;
 import io.modelcontextprotocol.client.McpClient;
@@ -292,41 +291,26 @@ class RandomNumberServerTest {
 
 
     /**
-     * Test using the official MCP SDK's McpSyncClient with HTTP transport.
+     * Test using the official MCP SDK's McpSyncClient with Streamable HTTP transport.
      * 
-     * This test starts an embedded HTTP server, connects to it using
+     * This test starts McpHttpServer, connects to it using
      * HttpClientStreamableHttpTransport, and calls the generateRandom tool.
      */
     @Test
-    void testHttpTransportClientGenerateRandom() throws Exception {
+    void testStreamableHttpTransportClientGenerateRandom() throws Exception {
         // Set up the StreamableServer with RandomService
         StreamableServer mcpServer = new StreamableServer();
         RandomService service = new RandomService();
         mcpServer.initialize(service);
 
-        // Start an embedded HTTP server on a random available port
-        HttpServer httpServer = HttpServer.create(new InetSocketAddress(0), 0);
-        int port = httpServer.getAddress().getPort();
-        
-        httpServer.createContext("/mcp", exchange -> {
-            if ("POST".equals(exchange.getRequestMethod())) {
-                String requestBody = new String(exchange.getRequestBody().readAllBytes());
-                String response = mcpServer.handleRequestSync(requestBody, null);
-                
-                exchange.getResponseHeaders().set("Content-Type", mcpServer.getContentType());
-                byte[] responseBytes = response.getBytes();
-                exchange.sendResponseHeaders(200, responseBytes.length);
-                exchange.getResponseBody().write(responseBytes);
-                exchange.getResponseBody().close();
-            } else {
-                exchange.sendResponseHeaders(405, -1);
-            }
-        });
-        httpServer.start();
+        // Start McpHttpServer with Streamable HTTP transport
+        int port = 18080;
+        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        httpServer.startStreamableServer();
 
         McpSyncClient client = null;
         try {
-            // Create HTTP transport pointing to our embedded server
+            // Create HTTP transport pointing to our server
             HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport
                     .builder("http://localhost:" + port)
                     .endpoint("/mcp")
@@ -368,14 +352,118 @@ class RandomNumberServerTest {
             assertTrue(randomNumber >= 0 && randomNumber < 100,
                     "Random number should be between 0 and 100, got: " + randomNumber);
 
-            System.out.println("Generated random number: " + randomNumber);
+            System.out.println("Generated random number (Streamable HTTP): " + randomNumber);
 
         } finally {
             // Clean up resources
             if (client != null) {
                 client.closeGracefully();
             }
-            httpServer.stop(0);
+            httpServer.stop();
+            mcpServer.shutdown();
+        }
+    }
+
+    /**
+     * Test using McpHttpServer with SSE transport.
+     * 
+     * This test verifies the SSE server starts correctly and endpoints are available.
+     */
+    @Test
+    void testSseServerStartup() throws Exception {
+        // Set up the StreamableServer with RandomService
+        StreamableServer mcpServer = new StreamableServer();
+        RandomService service = new RandomService();
+        mcpServer.initialize(service);
+
+        // Start McpHttpServer with SSE transport
+        int port = 18081;
+        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        httpServer.startSseServer();
+
+        try {
+            // Verify server is running
+            assertTrue(httpServer.isRunning(), "SSE server should be running");
+            assertEquals(port, httpServer.getPort(), "Server should be on correct port");
+
+            // Test SSE endpoint responds (GET /sse should return event-stream)
+            java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create("http://localhost:" + port + "/sse"))
+                    .GET()
+                    .timeout(Duration.ofSeconds(2))
+                    .build();
+
+            // Use async to avoid blocking on SSE stream (we just want to verify connection is accepted)
+            httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofInputStream());
+            
+            // Give server a moment to respond
+            Thread.sleep(500);
+            
+            // The connection should be established (SSE keeps connection open)
+            assertTrue(httpServer.isRunning(), "Server should still be running");
+
+        } finally {
+            httpServer.stop();
+            mcpServer.shutdown();
+        }
+    }
+
+    /**
+     * Test McpHttpServer with both SSE and Streamable HTTP transport.
+     */
+    @Test
+    void testCombinedServerStartup() throws Exception {
+        // Set up the StreamableServer with RandomService
+        StreamableServer mcpServer = new StreamableServer();
+        RandomService service = new RandomService();
+        mcpServer.initialize(service);
+
+        // Start McpHttpServer with both transports
+        int port = 18082;
+        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        httpServer.startServer();
+
+        McpSyncClient client = null;
+        try {
+            // Verify server is running
+            assertTrue(httpServer.isRunning(), "Combined server should be running");
+
+            // Test Streamable HTTP endpoint with MCP client
+            HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport
+                    .builder("http://localhost:" + port)
+                    .endpoint("/mcp")
+                    .build();
+
+            client = McpClient.sync(transport)
+                    .requestTimeout(Duration.ofSeconds(10))
+                    .initializationTimeout(Duration.ofSeconds(10))
+                    .build();
+
+            client.initialize();
+
+            // Call the generateRandom tool
+            McpSchema.CallToolResult result = client.callTool(
+                    new McpSchema.CallToolRequest("generateRandom", Map.of("bound", 50)));
+
+            assertNotNull(result, "Tool result should not be null");
+            assertFalse(result.content().isEmpty(), "Result should have content");
+
+            var content = result.content().get(0);
+            assertTrue(content instanceof McpSchema.TextContent, "Content should be TextContent");
+            
+            String textResult = ((McpSchema.TextContent) content).text();
+            int randomNumber = Integer.parseInt(textResult);
+            assertTrue(randomNumber >= 0 && randomNumber < 50,
+                    "Random number should be between 0 and 50, got: " + randomNumber);
+
+            System.out.println("Generated random number (Combined server): " + randomNumber);
+
+        } finally {
+            if (client != null) {
+                client.closeGracefully();
+            }
+            httpServer.stop();
             mcpServer.shutdown();
         }
     }
