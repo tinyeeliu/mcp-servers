@@ -1,11 +1,16 @@
 package io.mcp.random;
 
-import io.mcp.core.server.StdioServer;
+import io.mcp.core.protocol.McpService;
+import io.mcp.core.server.StandaloneServer;
 import io.mcp.random.service.RandomService;
 
 public class RandomNumberServer {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+
+        String transport = args[0];
+        McpService service = new RandomService();
+        StandaloneServer.launch(transport, service);
 
         /* 
         var jsonMapper = new JacksonMcpJsonMapper(new ObjectMapper());
@@ -25,8 +30,10 @@ public class RandomNumberServer {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.close();
         }));*/
+        /* 
+        
         StdioServer stdioServer = new StdioServer();
-        stdioServer.start(new RandomService());
+        stdioServer.start(new RandomService());*/
     }
 
 }
