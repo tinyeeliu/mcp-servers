@@ -160,6 +160,13 @@ public class McpHttpServer {
                 // Return response as JSON
                 String response = mcpServer.handleRequestSync(requestBody, sessionId);
                 
+                // Notifications return null - send 202 Accepted with no body
+                if (response == null) {
+                    exchange.getResponseHeaders().set("Mcp-Session-Id", sessionId);
+                    exchange.sendResponseHeaders(202, -1);
+                    return;
+                }
+                
                 exchange.getResponseHeaders().set("Content-Type", mcpServer.getContentType());
                 exchange.getResponseHeaders().set("Mcp-Session-Id", sessionId);
                 byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
@@ -188,9 +195,12 @@ public class McpHttpServer {
             // Process request and send response as SSE event
             String response = mcpServer.handleRequestSync(requestBody, sessionId);
             
-            String sseEvent = "event: message\ndata: " + response.replace("\n", "\ndata: ") + "\n\n";
-            os.write(sseEvent.getBytes(StandardCharsets.UTF_8));
-            os.flush();
+            // Notifications return null - no SSE event to send
+            if (response != null) {
+                String sseEvent = "event: message\ndata: " + response.replace("\n", "\ndata: ") + "\n\n";
+                os.write(sseEvent.getBytes(StandardCharsets.UTF_8));
+                os.flush();
+            }
         }
     }
 
