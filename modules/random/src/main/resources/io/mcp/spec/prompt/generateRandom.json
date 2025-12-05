@@ -1,12 +1,24 @@
 [
     {
-      "name": "code_review",
-      "title": "Request Code Review",
-      "description": "Asks the LLM to analyze code quality and suggest improvements",
+      "name": "random_game",
+      "title": "Generate Random Number for Games",
+      "description": "Generate a random number for gaming scenarios like dice rolls, lottery picks, or game mechanics",
       "arguments": [
         {
-          "name": "code",
-          "description": "The code to review",
+          "name": "bound",
+          "description": "The upper bound for the random number (e.g., 6 for a die, 100 for percentage, 52 for deck of cards)",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "random_test",
+      "title": "Generate Random Number for Testing",
+      "description": "Generate a random number for testing scenarios like sample data generation, random IDs, or statistical testing",
+      "arguments": [
+        {
+          "name": "bound",
+          "description": "The upper bound for the random number (e.g., 1000 for test IDs, 100 for percentages)",
           "required": true
         }
       ]
