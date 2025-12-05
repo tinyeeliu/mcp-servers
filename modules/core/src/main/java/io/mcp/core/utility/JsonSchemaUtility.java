@@ -190,4 +190,9 @@ public class JsonSchemaUtility {
 
         return resourceSpecifications;
     }
+
+
+    public static List<McpServerFeatures.AsyncTemplateSpecification> getTemplates(JsonNode jsonNode) throws IOException {
+//
+    }
 }
