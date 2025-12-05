@@ -2,6 +2,7 @@ package io.mcp.core.utility;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
+import reactor.core.publisher.Mono;
 
 public class JsonSchemaUtility {
  
@@ -74,6 +76,69 @@ public class JsonSchemaUtility {
 
 
     public static List<McpServerFeatures.AsyncPromptSpecification> getPrompts(JsonNode jsonNode) throws IOException {
-        
+        List<McpServerFeatures.AsyncPromptSpecification> promptSpecifications = new ArrayList<>();
+
+        if (!jsonNode.isArray()) {
+            throw new IOException("Prompts JSON must be an array");
+        }
+
+        for (JsonNode promptNode : jsonNode) {
+            String name = promptNode.get("name").asText();
+            String title = promptNode.get("title").asText();
+            String description = promptNode.get("description").asText();
+
+            // Parse arguments
+            List<McpSchema.PromptArgument> arguments = new ArrayList<>();
+            if (promptNode.has("arguments") && promptNode.get("arguments").isArray()) {
+                for (JsonNode argNode : promptNode.get("arguments")) {
+                    String argName = argNode.get("name").asText();
+                    String argDescription = argNode.get("description").asText();
+                    boolean required = argNode.get("required").asBoolean(false);
+
+                    arguments.add(new McpSchema.PromptArgument(argName, argDescription, required));
+                }
+            }
+
+            // Create the Prompt
+            McpSchema.Prompt prompt = new McpSchema.Prompt(name, description, arguments);
+
+            // Create the AsyncPromptSpecification with a handler
+            // Note: This is a basic handler that returns a simple message.
+            // In a real implementation, the handler logic should be provided by the specific tool/service.
+            McpServerFeatures.AsyncPromptSpecification spec = new McpServerFeatures.AsyncPromptSpecification(
+                prompt,
+                (exchange, request) -> {
+                    // Basic prompt handler - returns the prompt description and arguments
+                    StringBuilder content = new StringBuilder();
+                    content.append("Prompt: ").append(title).append("\n");
+                    content.append("Description: ").append(description).append("\n");
+
+                    if (!arguments.isEmpty()) {
+                        content.append("Arguments:\n");
+                        for (McpSchema.PromptArgument arg : arguments) {
+                            content.append("- ").append(arg.name()).append(": ").append(arg.description());
+                            if (arg.required()) {
+                                content.append(" (required)");
+                            }
+                            content.append("\n");
+                        }
+                    }
+
+                    return Mono.just(
+                        new McpSchema.GetPromptResult(
+                            description,
+                            List.of(new McpSchema.PromptMessage(
+                                McpSchema.Role.USER,
+                                new McpSchema.TextContent(content.toString())
+                            ))
+                        )
+                    );
+                }
+            );
+
+            promptSpecifications.add(spec);
+        }
+
+        return promptSpecifications;
     }
 }

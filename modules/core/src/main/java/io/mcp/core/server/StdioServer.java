@@ -13,7 +13,6 @@ import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
-import reactor.core.publisher.Mono;
 
 public class StdioServer {
     
@@ -32,23 +31,7 @@ public class StdioServer {
             toolSpecifications.add(tool.getToolSpecification());
         }
 
-
-        // Create a dummy prompt specification
-        List<McpServerFeatures.AsyncPromptSpecification> promptSpecifications = new ArrayList<>();
-        promptSpecifications.add(new McpServerFeatures.AsyncPromptSpecification(
-                new McpSchema.Prompt("dummy_prompt", "A dummy prompt for testing", List.of()),
-                (exchange, request) -> {
-                    // Dummy prompt handler - returns a simple message
-                    return Mono.just(
-                        new McpSchema.GetPromptResult("Dummy prompt result", List.of(
-                            new McpSchema.PromptMessage(
-                                McpSchema.Role.USER,
-                                new McpSchema.TextContent("This is a dummy prompt response")
-                            )
-                        ))
-                    );
-                }
-        ));
+        List<McpServerFeatures.AsyncPromptSpecification> promptSpecifications = mcpService.getPromptSpecifications();
 
         McpAsyncServer server = McpServer.async(transportProvider)
                 .serverInfo(mcpService.getServerInfo())
