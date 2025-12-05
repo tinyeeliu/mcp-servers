@@ -1,0 +1,14 @@
+[
+    {
+      "name": "code_review",
+      "title": "Request Code Review",
+      "description": "Asks the LLM to analyze code quality and suggest improvements",
+      "arguments": [
+        {
+          "name": "code",
+          "description": "The code to review",
+          "required": true
+        }
+      ]
+    }
+  ]
