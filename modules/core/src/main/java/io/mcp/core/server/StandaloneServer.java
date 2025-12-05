@@ -1,9 +1,6 @@
 package io.mcp.core.server;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-
-import com.sun.net.httpserver.HttpServer;
 
 import io.mcp.core.protocol.McpService;
 
@@ -14,7 +11,7 @@ public class StandaloneServer {
     /*
 
     Command line arguments:
-    - transport: stdio, http.
+    - transport: stdio, http, sse
     - classPath: the path to the service class
     */
 
@@ -34,23 +31,26 @@ public class StandaloneServer {
             StdioServer stdioServer = new StdioServer();
             stdioServer.start(service);
         } else if (transport.equals("http")) {
+            // Streamable HTTP transport
             StreamableServer mcpServer = new StreamableServer();
             mcpServer.initialize(service);
             
-            HttpServer httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
-            httpServer.createContext("/mcp", exchange -> {
-                if ("POST".equals(exchange.getRequestMethod())) {
-                    String requestBody = new String(exchange.getRequestBody().readAllBytes());
-                    String response = mcpServer.handleRequestSync(requestBody, null);
-                    
-                    exchange.getResponseHeaders().set("Content-Type", mcpServer.getContentType());
-                    exchange.sendResponseHeaders(200, response.length());
-                    exchange.getResponseBody().write(response.getBytes());
-                    exchange.getResponseBody().close();
-                }
-            });
-            httpServer.start();
-            System.out.println("MCP Server running on http://localhost:8080/mcp");
+            McpHttpServer httpServer = new McpHttpServer(mcpServer);
+            httpServer.startStreamableServer();
+        } else if (transport.equals("sse")) {
+            // SSE transport (legacy)
+            StreamableServer mcpServer = new StreamableServer();
+            mcpServer.initialize(service);
+            
+            McpHttpServer httpServer = new McpHttpServer(mcpServer);
+            httpServer.startSseServer();
+        } else if (transport.equals("http-all")) {
+            // Both SSE and Streamable HTTP
+            StreamableServer mcpServer = new StreamableServer();
+            mcpServer.initialize(service);
+            
+            McpHttpServer httpServer = new McpHttpServer(mcpServer);
+            httpServer.startServer();
         }
     }
 
