@@ -408,4 +408,8 @@ public class StreamableServer {
         Consumer<String> sseConsumer;
         // Add more session state as needed
     }
+
+
+    public void start(int port) throws IOException {
+    }
 }
