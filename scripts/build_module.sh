@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.." || exit 1
 
 if [ $# -eq 0 ]; then
     echo "Building all modules..."
-    mvn clean package -DskipTests
+    mvn clean install -DskipTests
 else
     MODULE_NAME=$1
     MODULE_PATH="modules/${MODULE_NAME}"
@@ -17,5 +17,5 @@ else
         exit 1
     fi
     echo "Building module: $MODULE_NAME"
-    mvn clean package -DskipTests -pl "$MODULE_PATH" -am
+    mvn clean install -DskipTests -pl "$MODULE_PATH" -am
 fi
