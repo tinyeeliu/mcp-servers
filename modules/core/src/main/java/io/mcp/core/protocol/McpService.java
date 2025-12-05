@@ -9,4 +9,5 @@ public interface McpService {
     public Implementation getServerInfo();
     public List<McpTool> getTools();
     public List<McpServerFeatures.AsyncPromptSpecification> getPromptSpecifications();
+    public List<McpServerFeatures.AsyncResourceSpecification> getResourceSpecifications();
 }

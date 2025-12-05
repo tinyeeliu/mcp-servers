@@ -19,4 +19,15 @@ public abstract class BaseMcpService implements McpService {
         }
         return allPromptSpecifications;
     }
+    
+    @Override
+    public List<McpServerFeatures.AsyncResourceSpecification> getResourceSpecifications(){
+        List<McpTool> tools = getTools();
+        List<McpServerFeatures.AsyncResourceSpecification> allResourceSpecifications = new ArrayList<>();
+        for (McpTool tool : tools) {
+            List<McpServerFeatures.AsyncResourceSpecification> resourceSpecifications = tool.getResourceSpecifications();
+            allResourceSpecifications.addAll(resourceSpecifications);
+        }
+        return allResourceSpecifications;
+    }
 }

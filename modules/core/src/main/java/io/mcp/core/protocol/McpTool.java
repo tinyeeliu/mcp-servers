@@ -18,4 +18,5 @@ public interface McpTool {
     public List<McpServerFeatures.AsyncPromptSpecification> getPromptSpecifications() ;
     public CompletableFuture<CallToolResult> call(McpAsyncServerExchange exchange, CallToolRequest request);
     public String getName();
+    public List<McpServerFeatures.AsyncResourceSpecification> getResourceSpecifications();
 }
