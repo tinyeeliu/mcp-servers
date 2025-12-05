@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.." || exit 1
 
 if [ $# -eq 0 ]; then
     echo "Building native images for all modules..."
-    mvn clean package -DskipTests
+    mvn clean package -DskipTests -Pnative
 else
     MODULE_NAME=$1
     MODULE_PATH="modules/${MODULE_NAME}"
@@ -17,5 +17,5 @@ else
         exit 1
     fi
     echo "Building native image for module: $MODULE_NAME"
-    mvn clean package -DskipTests -pl "$MODULE_PATH" -am
+    mvn clean package -DskipTests -Pnative -pl "$MODULE_PATH" -am
 fi

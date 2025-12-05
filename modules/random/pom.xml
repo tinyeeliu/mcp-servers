@@ -82,33 +82,42 @@
                 </executions>
             </plugin>
 
-            <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
-                <version>0.10.3</version>
-                <executions>
-                    <execution>
-                        <id>build-native</id>
-                        <goals>
-                            <goal>compile-no-fork</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <mainClass>io.mcp.random.RandomNumberServer</mainClass>
-                    <skipNativeTests>true</skipNativeTests>
-                    <imageName>${project.artifactId}</imageName>
-                    <buildArgs>
-                        <buildArg>--no-fallback</buildArg>
-                        <buildArg>--allow-incomplete-classpath</buildArg>
-                        <buildArg>--enable-url-protocols=https</buildArg>
-                        <buildArg>-march=compatibility</buildArg>
-                    </buildArgs>
-                </configuration>
-            </plugin>
-
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.10.3</version>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mainClass>io.mcp.random.RandomNumberServer</mainClass>
+                            <skipNativeTests>true</skipNativeTests>
+                            <imageName>${project.artifactId}</imageName>
+                            <buildArgs>
+                                <buildArg>--no-fallback</buildArg>
+                                <buildArg>--allow-incomplete-classpath</buildArg>
+                                <buildArg>--enable-url-protocols=https</buildArg>
+                                <buildArg>-march=compatibility</buildArg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
 
