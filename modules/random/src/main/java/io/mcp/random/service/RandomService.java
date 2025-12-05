@@ -22,4 +22,7 @@ public class RandomService extends BaseMcpService{
     public List<McpTool> getTools() {
         return List.of(new GenerateRandom());
     }
+
+
+
 }
