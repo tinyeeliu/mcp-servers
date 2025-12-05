@@ -24,7 +24,7 @@ public class GenerateRandom extends BaseMcpTool {
 
 
     private String makePrefix() {
-        return "V6-";
+        return "";
     }
 
     @Override
