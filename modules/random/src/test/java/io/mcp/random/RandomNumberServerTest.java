@@ -281,4 +281,16 @@ class RandomNumberServerTest {
 
         server.shutdown();
     }
+
+
+    /*
+    
+    Use the official MCP 
+    
+    */
+
+    @Test
+    void testHttpTransportClientGenerateRandom() throws Exception {
+
+    }
 }
