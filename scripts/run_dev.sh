@@ -17,11 +17,8 @@ if [ ! -d "$MODULE_PATH" ]; then
     exit 1
 fi
 
-if [ ! -f "$JAR_FILE" ]; then
-    echo "Error: JAR file not found: $JAR_FILE"
-    echo "Please build the module first using: ./scripts/build_module.sh $MODULE_NAME"
-    exit 1
-fi
+
+./scripts/build_module.sh
 
 echo "Running MCP server: $MODULE_NAME"
 echo "JAR file: $JAR_FILE"

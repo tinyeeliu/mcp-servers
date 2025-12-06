@@ -27,6 +27,12 @@ public class StandaloneLauncher {
 
 
     public static void launch(String transport, McpService service) throws IOException {
+       
+    
+        if (transport == null) {
+            transport = "stdio";
+        }
+
         if (transport.equals("stdio")) {
             StdioServer stdioServer = new StdioServer();
             stdioServer.start(service);

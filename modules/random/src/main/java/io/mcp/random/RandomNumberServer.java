@@ -8,7 +8,12 @@ public class RandomNumberServer {
 
     public static void main(String[] args) throws Exception {
 
-        String transport = args[0];
+        String transport = null;
+
+        if (args.length > 0) {
+            transport = args[0];
+        }
+
         McpService service = new RandomService();
         StandaloneLauncher.launch(transport, service);
 

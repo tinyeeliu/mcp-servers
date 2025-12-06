@@ -2,4 +2,4 @@
 
 
 ./scripts/build_native.sh random
-./scripts/run_native.sh http random
+./scripts/run_native.sh random http
