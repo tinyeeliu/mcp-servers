@@ -17,9 +17,6 @@
     <name>MCP Core</name>
     <description>Core interfaces and classes shared by all MCP modules</description>
 
-    <properties>
-        <mainClass>io.mcp.core.server.CoreLauncher</mainClass>
-    </properties>
 
     <dependencies>
 
@@ -79,40 +76,6 @@
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>native</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.graalvm.buildtools</groupId>
-                        <artifactId>native-maven-plugin</artifactId>
-                        <version>0.10.3</version>
-                        <executions>
-                            <execution>
-                                <id>build-native</id>
-                                <goals>
-                                    <goal>compile-no-fork</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <mainClass>${mainClass}</mainClass>
-                            <skipNativeTests>true</skipNativeTests>
-                            <imageName>${project.artifactId}</imageName>
-                            <buildArgs>
-                                <buildArg>--no-fallback</buildArg>
-                                <buildArg>--allow-incomplete-classpath</buildArg>
-                                <buildArg>--enable-url-protocols=https</buildArg>
-                                <buildArg>-march=compatibility</buildArg>
-                            </buildArgs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>
 
