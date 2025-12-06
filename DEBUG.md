@@ -12,6 +12,10 @@ Running native:
 
 Serve log works fine, but inspector doesn't show results but doesn't show error.
 
+## UNLIKELY CAUSE
+
+Other methods such as prompt listing works.
+
 
 ## SUSPECTED CAUSE
 
