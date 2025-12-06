@@ -25,6 +25,7 @@ public class StandaloneLauncher {
         launch(transport, service);
     }
 
+    public static boolean DEBUG_SIMPLE_SERVER = true;
 
     public static void launch(String transport, McpService service) throws IOException {
        
@@ -34,8 +35,14 @@ public class StandaloneLauncher {
         }
 
         if (transport.equals("stdio")) {
-            StdioServer stdioServer = new StdioServer();
-            stdioServer.start(service);
+
+            if (DEBUG_SIMPLE_SERVER) {
+                SimpleStdioTestServer.main(new String[0]);
+            } else {
+
+                StdioServer stdioServer = new StdioServer();
+                stdioServer.start(service);
+            }
         } else if (transport.equals("http")) {
             // Streamable HTTP transport
             StreamableServer mcpServer = new StreamableServer();
