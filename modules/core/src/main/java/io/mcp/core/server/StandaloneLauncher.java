@@ -38,8 +38,8 @@ public class StandaloneLauncher {
 
             if (DEBUG_SIMPLE_SERVER) {
                 //SimpleStdioTestServer.main(new String[0]);
-                SimpleSdkStdioAsyncTestServer.main(new String[0]);
-                //SimpleSdkStdioSyncTestServer.main(new String[0]);
+                //SimpleSdkStdioAsyncTestServer.main(new String[0]);
+                SimpleSdkStdioSyncTestServer.main(new String[0]);
             } else {
 
                 StdioServer stdioServer = new StdioServer();
