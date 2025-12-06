@@ -18,3 +18,8 @@ Serve log works fine, but inspector doesn't show results but doesn't show error.
 I am suspecting that GraalVM compile striped out something.
 Maybe related to json transformation.
 However, stdio transport uses official SDK. I am not sure we do any custom transformation.
+
+## ACTION
+
+Think about what can cause native build to not work.
+Can add more debugging log with Utility.debug.
