@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.protocol.McpTool;
+import io.mcp.core.utility.Utility;
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
@@ -52,8 +53,12 @@ public class StdioServer {
 
         // Add shutdown hook for graceful shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Utility.debug("Shutting down server");
             server.close();
         }));
+        
+
+        
 
     }
 
