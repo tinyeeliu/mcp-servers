@@ -37,7 +37,8 @@ public class StandaloneLauncher {
         if (transport.equals("stdio")) {
 
             if (DEBUG_SIMPLE_SERVER) {
-                SimpleStdioTestServer.main(new String[0]);
+                //SimpleStdioTestServer.main(new String[0]);
+                SimpleSdkStdioTestServer.main(new String[0]);
             } else {
 
                 StdioServer stdioServer = new StdioServer();
