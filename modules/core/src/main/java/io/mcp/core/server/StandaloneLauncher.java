@@ -28,7 +28,7 @@ public class StandaloneLauncher {
         launch(transport, service);
     }
 
-    public static boolean DEBUG_SIMPLE_SERVER = true;
+    public static boolean DEBUG_SIMPLE_SERVER = false;
 
     public static void launch(String transport, McpService service) throws IOException {
        
