@@ -4,11 +4,16 @@ import java.util.List;
 
 import io.mcp.core.base.BaseMcpService;
 import io.mcp.core.protocol.McpTool;
+import io.mcp.core.utility.Utility;
 import io.mcp.random.tool.GenerateRandom;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 
 public class RandomService extends BaseMcpService{
 
+
+    public RandomService() {
+        Utility.debug("RandomService constructor");
+    }
   
     @Override
     public Implementation getServerInfo() {
