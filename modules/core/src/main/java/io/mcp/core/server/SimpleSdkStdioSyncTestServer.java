@@ -50,6 +50,7 @@ public class SimpleSdkStdioSyncTestServer {
     }
 
     public static void main(String[] args) {
+        Utility.debug("SimpleSdkStdioSyncTestServer starting...");
         SimpleSdkStdioSyncTestServer server = new SimpleSdkStdioSyncTestServer();
         server.start();
     }

@@ -50,6 +50,7 @@ public class SimpleSdkStdioAsyncTestServer {
     }
 
     public static void main(String[] args) {
+        Utility.debug("SimpleSdkStdioAsyncTestServer starting...");
         SimpleSdkStdioAsyncTestServer server = new SimpleSdkStdioAsyncTestServer();
         server.start();
     }
