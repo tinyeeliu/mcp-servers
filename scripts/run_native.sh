@@ -54,36 +54,60 @@ cleanup() {
         echo "Stopping server (PID: $SERVER_PID)..."
         kill $SERVER_PID 2>/dev/null || true
     fi
+    if [ -n "$INSPECTOR_PID" ]; then
+        echo "Stopping inspector (PID: $INSPECTOR_PID)..."
+        kill $INSPECTOR_PID 2>/dev/null || true
+    fi
 }
 trap cleanup EXIT
 
 case "$TRANSPORT" in
     stdio)
-        npx @modelcontextprotocol/inspector@0.16.7 --transport stdio "$EXE_FILE" stdio 2>&1 | cat
+        # Create the error log file first
+        touch mcp_server_error.log
+        npx @modelcontextprotocol/inspector@0.16.7 --transport stdio "$EXE_FILE" stdio &
+        INSPECTOR_PID=$!
+        echo "Started inspector in background (PID: $INSPECTOR_PID)"
+        echo "Tailing error log..."
+        tail -f mcp_server_error.log
         ;;
     http)
+        # Create the error log file first
+        touch mcp_server_error.log
         # Start the server in background with Streamable HTTP transport
         "$EXE_FILE" http &
         SERVER_PID=$!
         echo "Started Streamable HTTP server (PID: $SERVER_PID)"
         sleep 2
 
-        # Run inspector with streamable HTTP transport
+        # Run inspector with streamable HTTP transport in background
         echo "Connecting inspector to http://localhost:8080/mcp"
-        npx @modelcontextprotocol/inspector@0.16.7 --transport streamable-http --url http://localhost:8080/mcp
+        npx @modelcontextprotocol/inspector@0.16.7 --transport streamable-http --url http://localhost:8080/mcp &
+        INSPECTOR_PID=$!
+        echo "Started inspector in background (PID: $INSPECTOR_PID)"
+        echo "Tailing error log..."
+        tail -f mcp_server_error.log
         ;;
     sse)
+        # Create the error log file first
+        touch mcp_server_error.log
         # Start the server in background with SSE transport
         "$EXE_FILE" sse &
         SERVER_PID=$!
         echo "Started SSE server (PID: $SERVER_PID)"
         sleep 2
 
-        # Run inspector with SSE transport
+        # Run inspector with SSE transport in background
         echo "Connecting inspector to http://localhost:8080/sse"
-        npx @modelcontextprotocol/inspector@0.16.7 --transport sse --url http://localhost:8080/sse
+        npx @modelcontextprotocol/inspector@0.16.7 --transport sse --url http://localhost:8080/sse &
+        INSPECTOR_PID=$!
+        echo "Started inspector in background (PID: $INSPECTOR_PID)"
+        echo "Tailing error log..."
+        tail -f mcp_server_error.log
         ;;
     http-all)
+        # Create the error log file first
+        touch mcp_server_error.log
         # Start the server in background with both transports
         "$EXE_FILE" http-all &
         SERVER_PID=$!
@@ -95,7 +119,11 @@ case "$TRANSPORT" in
         # Default to Streamable HTTP for inspector
         echo ""
         echo "Connecting inspector to Streamable HTTP endpoint..."
-        npx @modelcontextprotocol/inspector@0.16.7 --transport streamable-http --url http://localhost:8080/mcp
+        npx @modelcontextprotocol/inspector@0.16.7 --transport streamable-http --url http://localhost:8080/mcp &
+        INSPECTOR_PID=$!
+        echo "Started inspector in background (PID: $INSPECTOR_PID)"
+        echo "Tailing error log..."
+        tail -f mcp_server_error.log
         ;;
     *)
         echo "Error: Unsupported transport '$TRANSPORT'."
