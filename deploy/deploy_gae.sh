@@ -34,7 +34,7 @@ mkdir -p "$STAGING_DIR"
 cp "projects/mcp/target/mcp-service-1.0.0.jar" "$STAGING_DIR/mcp-service-1.0.0.jar"
 
 # Copy the app.yaml configuration
-cp "deploy/profiles/gae/mcp.yaml" "$STAGING_DIR/app.yaml"
+cp "deploy/profiles/mcp/standard.yaml" "$STAGING_DIR/app.yaml"
 
 # Make the application executable
 chmod +x "$STAGING_DIR/application"
@@ -48,4 +48,4 @@ echo "Step 3: Deploying to Google App Engine..."
 echo "Using version: $VERSION"
 
 # Deploy with gcloud
-gcloud app deploy "$STAGING_DIR/app.yaml" --quiet --project "$PROJECT_ID" --version "$VERSION" 
+gcloud app deploy "$STAGING_DIR/app.yaml" --project "$PROJECT_ID" --version "$VERSION" 
