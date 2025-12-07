@@ -40,7 +40,7 @@ class RandomNumberServerTest {
     /**
      * Creates a standard initialize request JSON
      */
-    private String createInitializeRequest(int id) {
+    private String createInitializeRequest(final int id) {
         return String.format("""
             {
                 "jsonrpc": "2.0",
@@ -73,7 +73,7 @@ class RandomNumberServerTest {
     /**
      * Creates a tools/list request JSON
      */
-    private String createListToolsRequest(int id) {
+    private String createListToolsRequest(final int id) {
         return String.format("""
             {
                 "jsonrpc": "2.0",
@@ -87,7 +87,7 @@ class RandomNumberServerTest {
     /**
      * Creates a tools/call request JSON
      */
-    private String createCallToolRequest(int id, String toolName, Map<String, Object> arguments) {
+    private String createCallToolRequest(final int id, final String toolName, final Map<String, Object> arguments) {
         try {
             return String.format("""
                 {
@@ -108,7 +108,7 @@ class RandomNumberServerTest {
     /**
      * Creates a prompts/list request JSON
      */
-    private String createListPromptsRequest(int id) {
+    private String createListPromptsRequest(final int id) {
         return String.format("""
             {
                 "jsonrpc": "2.0",
@@ -122,7 +122,7 @@ class RandomNumberServerTest {
     /**
      * Creates a prompts/get request JSON
      */
-    private String createGetPromptRequest(int id, String promptName, Map<String, Object> arguments) {
+    private String createGetPromptRequest(final int id, final String promptName, final Map<String, Object> arguments) {
         try {
             String argsJson = arguments != null && !arguments.isEmpty() ?
                 ", \"arguments\": " + objectMapper.writeValueAsString(arguments) : "";
@@ -144,7 +144,7 @@ class RandomNumberServerTest {
     /**
      * Creates a resources/list request JSON
      */
-    private String createListResourcesRequest(int id) {
+    private String createListResourcesRequest(final int id) {
         return String.format("""
             {
                 "jsonrpc": "2.0",
@@ -158,7 +158,7 @@ class RandomNumberServerTest {
     /**
      * Creates a resources/read request JSON
      */
-    private String createReadResourceRequest(int id, String uri) {
+    private String createReadResourceRequest(final int id, final String uri) {
         return String.format("""
             {
                 "jsonrpc": "2.0",
@@ -174,7 +174,7 @@ class RandomNumberServerTest {
     /**
      * Creates a resources/templates/list request JSON
      */
-    private String createListTemplatesRequest(int id) {
+    private String createListTemplatesRequest(final int id) {
         return String.format("""
             {
                 "jsonrpc": "2.0",
@@ -188,7 +188,7 @@ class RandomNumberServerTest {
     /**
      * Creates a resources/templates/read request JSON
      */
-    private String createReadTemplateRequest(int id, String uriTemplate) {
+    private String createReadTemplateRequest(final int id, final String uriTemplate) {
         return String.format("""
             {
                 "jsonrpc": "2.0",
@@ -724,15 +724,16 @@ class RandomNumberServerTest {
                 JsonNode toolsJson = objectMapper.readTree(toolsResponse);
                 JsonNode tools = toolsJson.path("result").path("tools");
                 assertTrue(tools.isArray() && tools.size() > 0, "Should have tools");
-            }
-            boolean hasGenerateRandom = false;
-            for (JsonNode tool : tools) {
-                if ("generateRandom".equals(tool.path("name").asText())) {
-                    hasGenerateRandom = true;
-                    break;
+
+                boolean hasGenerateRandom = false;
+                for (JsonNode tool : tools) {
+                    if ("generateRandom".equals(tool.path("name").asText())) {
+                        hasGenerateRandom = true;
+                        break;
+                    }
                 }
+                assertTrue(hasGenerateRandom, "generateRandom tool should be available");
             }
-            assertTrue(hasGenerateRandom, "generateRandom tool should be available");
 
             // Step 5: Test tools/call
             String toolCallResponse = sendSseMessage(httpClient, messageUrl, createCallToolRequest(3, "generateRandom", Map.of("bound", 50)));
