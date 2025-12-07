@@ -38,7 +38,19 @@ public class McpHttpServer {
     private final Map<String, SseSession> sseSessions = new ConcurrentHashMap<>();
 
     public McpHttpServer(StreamableServer mcpServer) {
-        this(mcpServer, DEFAULT_PORT);
+        this(mcpServer, getConfiguredPort());
+    }
+
+    private static int getConfiguredPort() {
+        String portProperty = System.getProperty("http.port");
+        if (portProperty != null) {
+            try {
+                return Integer.parseInt(portProperty);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid http.port system property: " + portProperty + ", using default port " + DEFAULT_PORT);
+            }
+        }
+        return DEFAULT_PORT;
     }
 
     public McpHttpServer(StreamableServer mcpServer, int port) {
