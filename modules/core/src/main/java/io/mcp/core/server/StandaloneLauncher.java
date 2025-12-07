@@ -20,10 +20,10 @@ public class StandaloneLauncher {
         String transport = args[0];
         String classPath = args[1];
 
+        Utility.setDebug(true);
         if(args.length > 2) {
             String debug = args[2];
             if("debug".equals(debug)) {
-                Utility.setDebug(true);
                 Utility.redirectStdErrToLog();
             } 
         }

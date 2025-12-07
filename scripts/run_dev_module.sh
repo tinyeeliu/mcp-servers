@@ -20,6 +20,11 @@ fi
 
 ./scripts/build_module.sh
 
+# Kill any existing processes on inspector ports and MCP server port
+kill -9 $(lsof -ti:6274 2>/dev/null) 2>/dev/null || true
+kill -9 $(lsof -ti:6277 2>/dev/null) 2>/dev/null || true
+kill -9 $(lsof -ti:8080 2>/dev/null) 2>/dev/null || true
+
 echo "Running MCP server: $MODULE_NAME"
 echo "JAR file: $JAR_FILE"
 echo "Server will listen on stdin/stdout for MCP protocol messages..."
