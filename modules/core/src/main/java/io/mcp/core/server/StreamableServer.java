@@ -211,8 +211,10 @@ public class StreamableServer {
             // Route to appropriate handler based on method
             return switch (method) {
                 case "initialize" -> {
-                    debug("    Handling initialize request");
-                    yield CompletableFuture.completedFuture(handleInitialize(params, id));
+                    debug("    Handling initialize request - id:", id, "params:", params);
+                    JsonNode result = handleInitialize(params, id);
+                    debug("    Initialize result:", result);
+                    yield CompletableFuture.completedFuture(result);
                 }
                 case "initialized" -> {
                     debug("    Handling initialized notification");
@@ -569,42 +571,33 @@ public class StreamableServer {
     }
 
     private CompletableFuture<JsonNode> handleTemplatesRead(JsonNode params, JsonNode id) {
-        String uri = params.path("uri").asText();
+        String uriTemplate = params.path("uriTemplate").asText();
 
-        debug("    Template read - uri:", uri);
+        debug("    Template read - uriTemplate:", uriTemplate);
 
-        // Find template that matches the URI
-        McpServerFeatures.AsyncResourceTemplateSpecification spec = null;
-        for (McpServerFeatures.AsyncResourceTemplateSpecification templateSpec : templateMap.values()) {
-            // Simple pattern matching - in a real implementation, this would be more sophisticated
-            // For now, we'll check if the URI starts with the template pattern
-            String uriTemplate = templateSpec.resourceTemplate().uriTemplate();
-            if (uri.startsWith(uriTemplate.replace("{", "").replace("}", "").replace("*", ""))) {
-                spec = templateSpec;
-                break;
-            }
-        }
+        // Find template that matches the uriTemplate
+        McpServerFeatures.AsyncResourceTemplateSpecification spec = templateMap.get(uriTemplate);
 
         if (spec == null) {
-            debug("!!! No template matches uri:", uri, "- Available templates:", templateMap.keySet());
+            debug("!!! No template matches uriTemplate:", uriTemplate, "- Available templates:", templateMap.keySet());
             return CompletableFuture.completedFuture(
-                    createErrorResponseNode(id, -32602, "No template matches URI: " + uri));
+                    createErrorResponseNode(id, -32602, "No template matches URI template: " + uriTemplate));
         }
 
         try {
-            // Create ReadResourceRequest
-            McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest(uri);
-            debug("    Invoking template handler for:", uri, "using template:", spec.resourceTemplate().name());
+            // Create ReadResourceRequest with the template URI
+            McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest(uriTemplate);
+            debug("    Invoking template handler for:", uriTemplate, "using template:", spec.resourceTemplate().name());
 
             return spec.readHandler().apply(null, request)
                     .toFuture()
                     .thenApply(result -> {
-                        debug("    Template", uri, "read successfully");
+                        debug("    Template", uriTemplate, "read successfully");
                         debug("    Template result contents count:", result.contents().size());
                         return createResourceResultResponse(id, result);
                     })
                     .exceptionally(e -> {
-                        debug("!!! Template read error for", uri, ":", e.getMessage());
+                        debug("!!! Template read error for", uriTemplate, ":", e.getMessage());
                         e.printStackTrace(System.err);
                         return createErrorResponseNode(id, -32603,
                                 "Template read error: " + e.getMessage());
