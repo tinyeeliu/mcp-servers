@@ -15,6 +15,8 @@ import io.modelcontextprotocol.spec.McpSchema;
 
 public class SimpleSdkStdioAsyncTestServer {
 
+    private McpAsyncServer server;
+
     public void start() {
         // Create JSON mapper and transport provider
         var jsonMapper = new JacksonMcpJsonMapper(new ObjectMapper());
@@ -27,7 +29,7 @@ public class SimpleSdkStdioAsyncTestServer {
         List<McpServerFeatures.AsyncResourceTemplateSpecification> templateSpecifications = new ArrayList<>();
 
         // Create server with no capabilities - just connection testing
-        McpAsyncServer server = McpServer.async(transportProvider)
+        this.server = McpServer.async(transportProvider)
                 .serverInfo(new McpSchema.Implementation("SimpleSdkStdioTestServer", "1.0.0"))
                 .capabilities(McpSchema.ServerCapabilities.builder()
                         .tools(false)
@@ -43,19 +45,33 @@ public class SimpleSdkStdioAsyncTestServer {
         // Add shutdown hook for graceful shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Utility.debug("Shutting down SimpleSdkStdioTestServer");
-            //server.close();
+            if (this.server != null) {
+                this.server.close();
+            }
         }));
 
-        Utility.debug("SimpleSdkStdioTestServer started - connection test mode");
+        Utility.debug("SimpleSdkStdioAsyncTestServer started - connection test mode");
     }
 
     public static void main(String[] args) {
         // Redirect stderr to log file to capture all error output
         Utility.redirectStdErrToLog();
 
-        Utility.debug("SimpleSdkStdioAsyncTestServer starting...");
+        Utility.debug("SimpleSdkStdioAsyncTestServer starting 2...");
         SimpleSdkStdioAsyncTestServer server = new SimpleSdkStdioAsyncTestServer();
         server.start();
+
+
+        Utility.debug("SimpleSdkStdioAsyncTestServer started...");
+
+        // Keep the main thread alive until the JVM shuts down
+        // GraalVM native images exit when main() returns, even with background threads
+        try {
+            Utility.debug("Sleeping for 10 seconds...");
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException e) {
+            Utility.debug("Main thread interrupted, shutting down");
+        }
     }
 
 }
