@@ -1,7 +1,9 @@
 package io.mcp.core.utility;
 
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -12,6 +14,7 @@ public class Utility {
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final String ERROR_LOG_FILE = "mcp_server_error.log";
     private static PrintWriter errorLogWriter;
+    private static boolean stderrRedirected = false;
 
     public static void setDebug(boolean debug) {
         DEBUG = debug;
@@ -22,8 +25,27 @@ public class Utility {
     }
 
     /**
+     * Redirect System.err to write to the error log file
+     * This captures all stderr output, not just debug messages
+     */
+    public static void redirectStdErrToLog() {
+        if (stderrRedirected) {
+            return; // Already redirected
+        }
+
+        try {
+            PrintStream errStream = new PrintStream(new FileOutputStream(ERROR_LOG_FILE, true), true);
+            System.setErr(errStream);
+            stderrRedirected = true;
+        } catch (IOException e) {
+            System.err.println("Failed to redirect stderr to log file: " + e.getMessage());
+        }
+    }
+
+    /**
      * Log debug messages to error log file.
      * Uses file logging to avoid interfering with stdout JSON-RPC communication.
+     * If stderr is redirected to the log file, this will use stderr to avoid double logging.
      *
      * @param messages Objects to log, will be concatenated with spaces
      */
@@ -44,7 +66,14 @@ public class Utility {
             sb.append(messages[i] != null ? messages[i].toString() : "null");
         }
 
-        writeToErrorLog(sb.toString());
+        String message = sb.toString();
+
+        // If stderr is redirected to the log file, use stderr to avoid double logging
+        if (stderrRedirected) {
+            System.err.println(message);
+        } else {
+            writeToErrorLog(message);
+        }
     }
 
     /**

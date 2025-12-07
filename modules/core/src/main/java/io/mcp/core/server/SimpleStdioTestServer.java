@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
+import io.mcp.core.utility.Utility;
+
 /**
  * A very simple STDIO server for testing basic connectivity with JVM and GraalVM native.
  * This server just responds to basic JSON-RPC messages to verify stdio communication works.
@@ -13,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 public class SimpleStdioTestServer {
 
     public static void main(String[] args) throws IOException {
+        // Redirect stderr to log file to capture all error output
+        Utility.redirectStdErrToLog();
+
         System.err.println("SimpleStdioTestServer starting...");
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));

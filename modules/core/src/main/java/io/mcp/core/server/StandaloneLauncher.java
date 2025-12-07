@@ -3,6 +3,7 @@ package io.mcp.core.server;
 import java.io.IOException;
 
 import io.mcp.core.protocol.McpService;
+import io.mcp.core.utility.Utility;
 
 
 public class StandaloneLauncher {
@@ -16,8 +17,10 @@ public class StandaloneLauncher {
     */
 
     public static void main(String[] args) throws Exception {
+        // Redirect stderr to log file to capture all error output
+        Utility.redirectStdErrToLog();
 
-    
+
         String transport = args[0];
         String classPath = args[1];
         Class<?> serviceClass = Class.forName(classPath);

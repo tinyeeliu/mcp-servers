@@ -50,6 +50,9 @@ public class SimpleSdkStdioSyncTestServer {
     }
 
     public static void main(String[] args) {
+        // Redirect stderr to log file to capture all error output
+        Utility.redirectStdErrToLog();
+
         Utility.debug("SimpleSdkStdioSyncTestServer starting...");
         SimpleSdkStdioSyncTestServer server = new SimpleSdkStdioSyncTestServer();
         server.start();
