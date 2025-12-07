@@ -45,9 +45,17 @@ public class StandaloneLauncher {
                 SimpleSdkStdioSyncTestServer.main(new String[0]);
             } else {
 
-                StdioServer stdioServer = new StdioServer();
-                stdioServer.start(service);
+                // Use the new native-image compatible stdio server
+                McpStdioServer stdioServer = new McpStdioServer();
+                stdioServer.initialize(service);
+                stdioServer.start();
             }
+
+        } else if (transport.equals("stdio-async")) {
+
+            // Alternative: use the official SDK async server (problematic in native images)
+            StdioServer stdioServer = new StdioServer();
+            stdioServer.start(service);
         } else if (transport.equals("http")) {
             // Streamable HTTP transport
             StreamableServer mcpServer = new StreamableServer();
