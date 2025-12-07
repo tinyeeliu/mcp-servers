@@ -18,7 +18,7 @@ VERSION="${2:-$(date +'%Y%m%d-%H%M')}"
 
 # Step 1. Build the native image of mcp project
 
-./scripts/build.sh
+./scripts/build_native.sh
 
 # Step 2. Make a staging directory in target
 # Copy the image to the staging directory
@@ -31,7 +31,7 @@ STAGING_DIR="projects/mcp/target/appengine-staging"
 mkdir -p "$STAGING_DIR"
 
 # Copy the native image and rename it to 'application' (as expected by entrypoint)
-cp "projects/mcp/target/mcp-service-1.0.0.jar" "$STAGING_DIR/mcp-service-1.0.0.jar"
+cp "projects/mcp/target/mcp-service" "$STAGING_DIR/application"
 
 # Copy the app.yaml configuration
 cp "deploy/profiles/gae/mcp.yaml" "$STAGING_DIR/app.yaml"
