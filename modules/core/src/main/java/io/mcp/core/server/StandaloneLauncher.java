@@ -8,7 +8,6 @@ import io.mcp.core.utility.Utility;
 
 public class StandaloneLauncher {
     
-
     /*
 
     Command line arguments:
@@ -28,8 +27,7 @@ public class StandaloneLauncher {
         launch(transport, service);
     }
 
-    public static boolean DEBUG_SIMPLE_SERVER = false;
-
+ 
     public static void launch(String transport, McpService service) throws IOException {
        
          //update the version number whenever we make changes to the project
