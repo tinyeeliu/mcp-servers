@@ -16,12 +16,18 @@ public class StandaloneLauncher {
     */
 
     public static void main(String[] args) throws Exception {
-        // Redirect stderr to log file to capture all error output
-        Utility.redirectStdErrToLog();
-
-       
+  
         String transport = args[0];
         String classPath = args[1];
+
+        if(args.length > 2) {
+            String debug = args[2];
+            if("debug".equals(debug)) {
+                Utility.setDebug(true);
+                Utility.redirectStdErrToLog();
+            } 
+        }
+
         Class<?> serviceClass = Class.forName(classPath);
         McpService service = (McpService) serviceClass.getDeclaredConstructor().newInstance();
         launch(transport, service);
