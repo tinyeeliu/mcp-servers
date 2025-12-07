@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 public class Utility {
 
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final String ERROR_LOG_FILE = "mcp_server_error.log";
     private static PrintWriter errorLogWriter;
