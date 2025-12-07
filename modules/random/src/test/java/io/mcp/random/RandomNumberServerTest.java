@@ -22,9 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mcp.core.server.McpHttpServer;
 import io.mcp.core.server.StreamableServer;
 import io.mcp.random.service.RandomService;
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
@@ -538,57 +535,62 @@ class RandomNumberServerTest {
         McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
         httpServer.startStreamableServer();
 
-        McpSyncClient client = null;
+        java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
+
         try {
-            // Create HTTP transport pointing to our server
-            HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport
-                    .builder("http://localhost:" + port)
-                    .endpoint("/mcp")
+            // Step 1: Test initialize
+            String initResponse = sendHttpRequest(httpClient, port, createInitializeRequest(1));
+            validateJsonRpcResponse(initResponse, 1);
+            JsonNode initJson = objectMapper.readTree(initResponse);
+            assertEquals("2024-11-05", initJson.path("result").path("protocolVersion").asText());
+
+            // Step 2: Send initialized notification
+            java.net.http.HttpRequest initNotificationRequest = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create("http://localhost:" + port + "/mcp"))
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(createInitializedNotification()))
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(5))
                     .build();
 
-            // Create MCP sync client
-            client = McpClient.sync(transport)
-                    .requestTimeout(Duration.ofSeconds(10))
-                    .initializationTimeout(Duration.ofSeconds(10))
-                    .build();
+            java.net.http.HttpResponse<String> initNotificationResponse = httpClient.send(initNotificationRequest, java.net.http.HttpResponse.BodyHandlers.ofString());
+            assertTrue(initNotificationResponse.statusCode() == 200 || initNotificationResponse.statusCode() == 202,
+                    "Initialized notification should return 200 or 202, got: " + initNotificationResponse.statusCode());
 
-            // Initialize the client (performs handshake with server)
-            client.initialize();
-
-            // List available tools
-            McpSchema.ListToolsResult toolsResult = client.listTools();
-            assertNotNull(toolsResult, "Tools result should not be null");
-            assertFalse(toolsResult.tools().isEmpty(), "Should have at least one tool");
+            // Step 3: Test tools/list
+            String toolsResponse = sendHttpRequest(httpClient, port, createListToolsRequest(2));
+            validateJsonRpcResponse(toolsResponse, 2);
+            JsonNode toolsJson = objectMapper.readTree(toolsResponse);
+            JsonNode tools = toolsJson.path("result").path("tools");
+            assertTrue(tools.isArray() && tools.size() > 0, "Should have tools");
 
             // Verify generateRandom tool is available
-            boolean hasGenerateRandom = toolsResult.tools().stream()
-                    .anyMatch(tool -> "generateRandom".equals(tool.name()));
+            boolean hasGenerateRandom = false;
+            for (JsonNode tool : tools) {
+                if ("generateRandom".equals(tool.path("name").asText())) {
+                    hasGenerateRandom = true;
+                    break;
+                }
+            }
             assertTrue(hasGenerateRandom, "generateRandom tool should be available");
 
-            // Call the generateRandom tool
-            McpSchema.CallToolResult result = client.callTool(
-                    new McpSchema.CallToolRequest("generateRandom", Map.of("bound", 100)));
+            // Step 4: Test tools/call
+            String toolCallResponse = sendHttpRequest(httpClient, port, createCallToolRequest(3, "generateRandom", Map.of("bound", 100)));
+            validateJsonRpcResponse(toolCallResponse, 3);
+            JsonNode toolCallJson = objectMapper.readTree(toolCallResponse);
+            JsonNode toolCallContent = toolCallJson.path("result").path("content");
+            assertTrue(toolCallContent.isArray() && toolCallContent.size() > 0, "Tool call should have content");
 
-            // Verify the result
-            assertNotNull(result, "Tool result should not be null");
-            assertFalse(result.content().isEmpty(), "Result should have content");
+            var content = toolCallContent.get(0);
+            assertTrue(content.has("type") && "text".equals(content.path("type").asText()), "Content should be text type");
 
-            // Get the text content from the result
-            var content = result.content().get(0);
-            assertTrue(content instanceof McpSchema.TextContent, "Content should be TextContent");
-            
-            String textResult = ((McpSchema.TextContent) content).text();
-            int randomNumber = Integer.parseInt(textResult);
-            assertTrue(randomNumber >= 0 && randomNumber < 100,
-                    "Random number should be between 0 and 100, got: " + randomNumber);
+            String text = content.path("text").asText();
+            assertTrue(text.matches("\\d+"), "Result should be a number");
+            int randomNumber = Integer.parseInt(text);
+            assertTrue(randomNumber >= 0 && randomNumber < 100, "Random number should be between 0 and 99");
 
             System.out.println("Generated random number (Streamable HTTP): " + randomNumber);
 
         } finally {
-            // Clean up resources
-            if (client != null) {
-                client.closeGracefully();
-            }
             httpServer.stop();
             mcpServer.shutdown();
         }
@@ -851,45 +853,48 @@ class RandomNumberServerTest {
         McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
         httpServer.startServer();
 
-        McpSyncClient client = null;
+        java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
+
         try {
             // Verify server is running
             assertTrue(httpServer.isRunning(), "Combined server should be running");
 
-            // Test Streamable HTTP endpoint with MCP client
-            HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport
-                    .builder("http://localhost:" + port)
-                    .endpoint("/mcp")
+            // Step 1: Test initialize
+            String initResponse = sendHttpRequest(httpClient, port, createInitializeRequest(1));
+            validateJsonRpcResponse(initResponse, 1);
+            JsonNode initJson = objectMapper.readTree(initResponse);
+            assertEquals("2024-11-05", initJson.path("result").path("protocolVersion").asText());
+
+            // Step 2: Send initialized notification
+            java.net.http.HttpRequest initNotificationRequest = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create("http://localhost:" + port + "/mcp"))
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(createInitializedNotification()))
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(5))
                     .build();
 
-            client = McpClient.sync(transport)
-                    .requestTimeout(Duration.ofSeconds(10))
-                    .initializationTimeout(Duration.ofSeconds(10))
-                    .build();
+            java.net.http.HttpResponse<String> initNotificationResponse = httpClient.send(initNotificationRequest, java.net.http.HttpResponse.BodyHandlers.ofString());
+            assertTrue(initNotificationResponse.statusCode() == 200 || initNotificationResponse.statusCode() == 202,
+                    "Initialized notification should return 200 or 202, got: " + initNotificationResponse.statusCode());
 
-            client.initialize();
+            // Step 3: Test tools/call
+            String toolCallResponse = sendHttpRequest(httpClient, port, createCallToolRequest(2, "generateRandom", Map.of("bound", 50)));
+            validateJsonRpcResponse(toolCallResponse, 2);
+            JsonNode toolCallJson = objectMapper.readTree(toolCallResponse);
+            JsonNode toolCallContent = toolCallJson.path("result").path("content");
+            assertTrue(toolCallContent.isArray() && toolCallContent.size() > 0, "Tool call should have content");
 
-            // Call the generateRandom tool
-            McpSchema.CallToolResult result = client.callTool(
-                    new McpSchema.CallToolRequest("generateRandom", Map.of("bound", 50)));
+            var content = toolCallContent.get(0);
+            assertTrue(content.has("type") && "text".equals(content.path("type").asText()), "Content should be text type");
 
-            assertNotNull(result, "Tool result should not be null");
-            assertFalse(result.content().isEmpty(), "Result should have content");
-
-            var content = result.content().get(0);
-            assertTrue(content instanceof McpSchema.TextContent, "Content should be TextContent");
-            
-            String textResult = ((McpSchema.TextContent) content).text();
-            int randomNumber = Integer.parseInt(textResult);
-            assertTrue(randomNumber >= 0 && randomNumber < 50,
-                    "Random number should be between 0 and 50, got: " + randomNumber);
+            String text = content.path("text").asText();
+            assertTrue(text.matches("\\d+"), "Result should be a number");
+            int randomNumber = Integer.parseInt(text);
+            assertTrue(randomNumber >= 0 && randomNumber < 50, "Random number should be between 0 and 49");
 
             System.out.println("Generated random number (Combined server): " + randomNumber);
 
         } finally {
-            if (client != null) {
-                client.closeGracefully();
-            }
             httpServer.stop();
             mcpServer.shutdown();
         }
