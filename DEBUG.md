@@ -27,6 +27,13 @@ SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
 [DEBUG 2025-12-07 16:49:53.923] SimpleSdkStdioTestServer started - connection test mode
 [DEBUG 2025-12-07 16:49:53.923] Shutting down SimpleSdkStdioTestServer
 
+## Github SDK Source Code
+
+https://github.com/modelcontextprotocol/java-sdk
+
+## NOT LIKELY CAUSE
+
+Join current thread won't work. It hangs every thing.
 
 ## SUSPECTED CAUSE
 

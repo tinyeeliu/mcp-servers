@@ -52,7 +52,7 @@ public class SimpleSdkStdioAsyncTestServer {
     public static void main(String[] args) {
         // Redirect stderr to log file to capture all error output
         Utility.redirectStdErrToLog();
-
+https://github.com/modelcontextprotocol/java-sdk
         Utility.debug("SimpleSdkStdioAsyncTestServer starting...");
         SimpleSdkStdioAsyncTestServer server = new SimpleSdkStdioAsyncTestServer();
         server.start();
