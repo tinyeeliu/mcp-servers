@@ -42,7 +42,13 @@ Server is not stopped. I can see server log when inspector clicks continue.
 
 GraalVM related issue.
 
-## ACTION
+## ACTION TAKEN
 
-Think about what can cause native build to not work.
-Can add more debugging log with Utility.debug.
+Removed maven-shade-plugin from core module pom.xml to eliminate potential GraalVM native build issues with uber jars.
+- Core module now builds as regular jar instead of shaded uber jar
+- Set main class to `io.mcp.core.server.SimpleSdkStdioAsyncTestServer`
+- Build and exec plugin verified working
+
+## NEXT STEPS
+
+Test native build with core module to see if the hanging issue is resolved.
