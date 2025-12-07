@@ -3,7 +3,7 @@
 # Run the MCP project in stdio mode using Maven.
 
 echo "Running MCP project"
-echo "Server will listen on stdin/stdout for MCP protocol messages..."
+echo "Server will listen on http for MCP protocol messages..."
 echo ""
 
 cd "$(dirname "$0")/.." || exit 1
