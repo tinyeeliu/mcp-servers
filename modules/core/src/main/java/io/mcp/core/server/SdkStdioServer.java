@@ -5,9 +5,9 @@ import java.io.IOException;
 import io.mcp.core.protocol.McpService;
 
 /**
- * Legacy StdioServer - now delegates to the new native-image compatible McpStdioServer.
+ * Official SDK STDIO server. This is the original server that does not work in native image.
  */
-public class StdioServer {
+public class SdkStdioServer {
 
     public void start(McpService mcpService) throws IOException {
         McpStdioServer stdioServer = new McpStdioServer();

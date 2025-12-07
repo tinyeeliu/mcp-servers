@@ -42,23 +42,18 @@ public class StandaloneLauncher {
 
         if (transport.equals("stdio")) {
 
-            if (DEBUG_SIMPLE_SERVER) {
-                //SimpleStdioTestServer.main(new String[0]);
-                //SimpleSdkStdioAsyncTestServer.main(new String[0]);
-                SimpleSdkStdioSyncTestServer.main(new String[0]);
-            } else {
-
+            if (Utility.isNative()) {
                 // Use the new native-image compatible stdio server
                 McpStdioServer stdioServer = new McpStdioServer();
                 stdioServer.initialize(service);
                 stdioServer.start();
+            } else {
+
+                //Use the official SDK STDIO server
+                SdkStdioServer stdioServer = new SdkStdioServer();
+                stdioServer.start(service);
             }
 
-        } else if (transport.equals("stdio-async")) {
-
-            // Alternative: use the official SDK async server (problematic in native images)
-            StdioServer stdioServer = new StdioServer();
-            stdioServer.start(service);
         } else if (transport.equals("http")) {
             // Streamable HTTP transport
             StreamableServer mcpServer = new StreamableServer();

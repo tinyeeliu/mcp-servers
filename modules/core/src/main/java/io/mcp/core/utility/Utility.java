@@ -24,6 +24,12 @@ public class Utility {
         return DEBUG;
     }
 
+	public static boolean isNative(){
+
+		return "Substrate VM".equals(System.getProperty("java.vm.name"));
+
+	}
+
     /**
      * Redirect System.err to write to the error log file
      * This captures all stderr output, not just debug messages
