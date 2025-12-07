@@ -62,11 +62,20 @@ trap cleanup EXIT
 
 case "$TRANSPORT" in
     stdio)
-        npx @modelcontextprotocol/inspector@0.16.7 --transport stdio java --enable-preview -jar "$JAR_FILE" stdio 2>&1 | cat
+        if [ "$MODULE_NAME" = "core" ]; then
+            # Core module is not shaded, use maven exec instead
+            npx @modelcontextprotocol/inspector@0.16.7 --transport stdio mvn exec:java -pl "$MODULE_PATH" -Dexec.args="stdio" 2>&1 | cat
+        else
+            npx @modelcontextprotocol/inspector@0.16.7 --transport stdio java --enable-preview -jar "$JAR_FILE" stdio 2>&1 | cat
+        fi
         ;;
     http)
         # Start the server in background with Streamable HTTP transport
-        java --enable-preview -jar "$JAR_FILE" http &
+        if [ "$MODULE_NAME" = "core" ]; then
+            mvn exec:java -pl "$MODULE_PATH" -Dexec.args="http" &
+        else
+            java --enable-preview -jar "$JAR_FILE" http &
+        fi
         SERVER_PID=$!
         echo "Started Streamable HTTP server (PID: $SERVER_PID)"
         sleep 2
@@ -77,7 +86,11 @@ case "$TRANSPORT" in
         ;;
     sse)
         # Start the server in background with SSE transport
-        java --enable-preview -jar "$JAR_FILE" sse &
+        if [ "$MODULE_NAME" = "core" ]; then
+            mvn exec:java -pl "$MODULE_PATH" -Dexec.args="sse" &
+        else
+            java --enable-preview -jar "$JAR_FILE" sse &
+        fi
         SERVER_PID=$!
         echo "Started SSE server (PID: $SERVER_PID)"
         sleep 2
@@ -88,7 +101,11 @@ case "$TRANSPORT" in
         ;;
     http-all)
         # Start the server in background with both transports
-        java --enable-preview -jar "$JAR_FILE" http-all &
+        if [ "$MODULE_NAME" = "core" ]; then
+            mvn exec:java -pl "$MODULE_PATH" -Dexec.args="http-all" &
+        else
+            java --enable-preview -jar "$JAR_FILE" http-all &
+        fi
         SERVER_PID=$!
         echo "Started combined HTTP server (PID: $SERVER_PID)"
         echo "  Streamable HTTP: http://localhost:8080/mcp"
