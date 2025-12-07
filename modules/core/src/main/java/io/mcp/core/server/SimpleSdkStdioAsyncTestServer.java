@@ -56,13 +56,6 @@ public class SimpleSdkStdioAsyncTestServer {
         Utility.debug("SimpleSdkStdioAsyncTestServer starting...");
         SimpleSdkStdioAsyncTestServer server = new SimpleSdkStdioAsyncTestServer();
         server.start();
-
-        // Keep the main thread alive indefinitely for stdio communication
-        try {
-            Thread.currentThread().join();
-        } catch (InterruptedException e) {
-            Utility.debug("Server interrupted, shutting down");
-        }
     }
 
 }

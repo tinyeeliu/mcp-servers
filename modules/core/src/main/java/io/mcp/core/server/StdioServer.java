@@ -56,13 +56,9 @@ public class StdioServer {
             Utility.debug("Shutting down server");
             server.close();
         }));
+        
 
-        // Keep the calling thread alive indefinitely for stdio communication
-        try {
-            Thread.currentThread().join();
-        } catch (InterruptedException e) {
-            Utility.debug("Server interrupted, shutting down");
-        }
+        
 
     }
 
