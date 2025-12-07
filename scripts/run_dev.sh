@@ -17,4 +17,9 @@ cd "$(dirname "$0")/../projects/mcp" || exit 1
 # Run the MCP project in stdio mode using Maven.
 #mvn clean exec:java -DskipTests -Dexec.mainClass="io.mcp.random.RandomNumberServer" 
 
+# Build the uber jar
+mvn clean package -DskipTests
+
 # Run the uber jar
+echo "Starting MCP server from uber jar..."
+java -jar target/mcp-service-1.0.0-SNAPSHOT.jar
