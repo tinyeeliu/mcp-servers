@@ -56,6 +56,13 @@ public class SimpleSdkStdioSyncTestServer {
         Utility.debug("SimpleSdkStdioSyncTestServer starting...");
         SimpleSdkStdioSyncTestServer server = new SimpleSdkStdioSyncTestServer();
         server.start();
+
+        // Keep the main thread alive indefinitely for stdio communication
+        try {
+            Thread.currentThread().join();
+        } catch (InterruptedException e) {
+            Utility.debug("Server interrupted, shutting down");
+        }
     }
 
 }
