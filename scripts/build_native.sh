@@ -1,21 +1,12 @@
 #!/bin/bash
 
-# Build native images for modules using GraalVM.
-# Usage: ./build_native.sh [module_name]
-# If no module name is provided, builds native images for all modules.
+# Build native image for MCP project using GraalVM.
+# This builds the uber jar first, then creates a native image.
 
-cd "$(dirname "$0")/.." || exit 1
+echo "Building native image for MCP project..."
+echo "Step 1: Building uber jar..."
+cd projects/mcp || exit 1
+mvn clean package -DskipTests
 
-if [ $# -eq 0 ]; then
-    echo "Building native images for all modules..."
-    mvn clean package -DskipTests -Pnative
-else
-    MODULE_NAME=$1
-    MODULE_PATH="modules/${MODULE_NAME}"
-    if [ ! -d "$MODULE_PATH" ]; then
-        echo "Error: Module '$MODULE_NAME' not found at $MODULE_PATH"
-        exit 1
-    fi
-    echo "Building native image for module: $MODULE_NAME"
-    mvn clean package -DskipTests -Pnative -pl "$MODULE_PATH" -am
-fi
+echo "Step 2: Building native image with GraalVM..."
+mvn package -DskipTests -Pnative
