@@ -2,7 +2,7 @@
 
 Running with jvm:
 
-./scripts/run_inspector.sh random stdio
+./scripts/run_inspector.sh core stdio
 
 Works fine. Stdio MCP tool works.
 
@@ -35,11 +35,6 @@ The log "Shutting down SimpleSdkStdioTestServer" is not presented when using jvm
 
 ## ACTION TAKEN
 
-Removed maven-shade-plugin from core module pom.xml to eliminate potential GraalVM native build issues with uber jars.
-- Core module now builds as regular jar instead of shaded uber jar
-- Set main class to `io.mcp.core.server.SimpleSdkStdioAsyncTestServer`
-- Build and exec plugin verified working
 
 ## NEXT STEPS
 
-Test native build with core module to see if the hanging issue is resolved.
