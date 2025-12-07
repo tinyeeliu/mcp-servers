@@ -20,6 +20,8 @@ public class StandaloneLauncher {
         // Redirect stderr to log file to capture all error output
         Utility.redirectStdErrToLog();
 
+        //update the version number whenever we make changes to the project
+        Utility.debug("StandaloneLauncher v1 starting...");
 
         String transport = args[0];
         String classPath = args[1];
