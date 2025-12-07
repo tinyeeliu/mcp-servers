@@ -17,14 +17,13 @@ if [ $# -lt 1 ] || [ $# -gt 2 ]; then
     echo "  sse       - SSE transport (GET /sse + POST /messages)"
     echo "  http-all  - Both SSE and Streamable HTTP"
     echo ""
-    echo "Builds and runs the packaged JAR with MCP Inspector."
+    echo "Builds and runs the module with MCP Inspector."
     exit 1
 fi
 
 MODULE_NAME=$1
 TRANSPORT=${2:-stdio}  # Default to stdio if not specified
 MODULE_PATH="modules/${MODULE_NAME}"
-JAR_FILE="$MODULE_PATH/target/mcp-${MODULE_NAME}-1.0.0-SNAPSHOT.jar"
 
 if [ ! -d "$MODULE_PATH" ]; then
     echo "Error: Module '$MODULE_NAME' not found at $MODULE_PATH"
@@ -38,18 +37,11 @@ kill -9 $(lsof -ti:8080 2>/dev/null) 2>/dev/null || true
 
 cd "$(dirname "$0")/.." || exit 1
 
-# Build and run packaged JAR
-./scripts/build_module.sh
-
-if [ ! -f "$JAR_FILE" ]; then
-    echo "Error: JAR file not found: $JAR_FILE"
-    echo "Please build the module first using: ./scripts/build_module.sh $MODULE_NAME"
-    exit 1
-fi
+# Build the specific module
+./scripts/build_module.sh "$MODULE_NAME"
 
 echo "Running MCP Inspector for module: $MODULE_NAME"
 echo "Transport: $TRANSPORT"
-echo "JAR file: $JAR_FILE"
 echo ""
 
 cleanup() {
@@ -68,12 +60,7 @@ case "$TRANSPORT" in
     stdio)
         # Create the error log file first
         touch mcp_server_error.log
-        if [ "$MODULE_NAME" = "core" ]; then
-            # Core module is not shaded, use maven exec instead
-            npx @modelcontextprotocol/inspector@0.16.7 --transport stdio mvn exec:java -pl "$MODULE_PATH" -Dexec.args="stdio" &
-        else
-            npx @modelcontextprotocol/inspector@0.16.7 --transport stdio java --enable-preview -jar "$JAR_FILE" stdio &
-        fi
+        npx @modelcontextprotocol/inspector@0.16.7 --transport stdio mvn exec:java -pl "$MODULE_PATH" -Dexec.args="stdio" &
         INSPECTOR_PID=$!
         echo "Started inspector in background (PID: $INSPECTOR_PID)"
         echo "Tailing error log..."
@@ -83,11 +70,7 @@ case "$TRANSPORT" in
         # Create the error log file first
         touch mcp_server_error.log
         # Start the server in background with Streamable HTTP transport
-        if [ "$MODULE_NAME" = "core" ]; then
-            mvn exec:java -pl "$MODULE_PATH" -Dexec.args="http" &
-        else
-            java --enable-preview -jar "$JAR_FILE" http &
-        fi
+        mvn exec:java -pl "$MODULE_PATH" -Dexec.args="http" &
         SERVER_PID=$!
         echo "Started Streamable HTTP server (PID: $SERVER_PID)"
         sleep 2
@@ -104,11 +87,7 @@ case "$TRANSPORT" in
         # Create the error log file first
         touch mcp_server_error.log
         # Start the server in background with SSE transport
-        if [ "$MODULE_NAME" = "core" ]; then
-            mvn exec:java -pl "$MODULE_PATH" -Dexec.args="sse" &
-        else
-            java --enable-preview -jar "$JAR_FILE" sse &
-        fi
+        mvn exec:java -pl "$MODULE_PATH" -Dexec.args="sse" &
         SERVER_PID=$!
         echo "Started SSE server (PID: $SERVER_PID)"
         sleep 2
@@ -125,11 +104,7 @@ case "$TRANSPORT" in
         # Create the error log file first
         touch mcp_server_error.log
         # Start the server in background with both transports
-        if [ "$MODULE_NAME" = "core" ]; then
-            mvn exec:java -pl "$MODULE_PATH" -Dexec.args="http-all" &
-        else
-            java --enable-preview -jar "$JAR_FILE" http-all &
-        fi
+        mvn exec:java -pl "$MODULE_PATH" -Dexec.args="http-all" &
         SERVER_PID=$!
         echo "Started combined HTTP server (PID: $SERVER_PID)"
         echo "  Streamable HTTP: http://localhost:8080/mcp"
