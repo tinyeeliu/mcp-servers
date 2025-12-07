@@ -6,7 +6,7 @@
 
 
     <groupId>io.mcp</groupId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <artifactId>mcp-service</artifactId>
     <packaging>jar</packaging>
@@ -17,6 +17,7 @@
     <!-- TODO: Fix me -->
     <properties>
         <native.mainClass>io.mcp.random.RandomNumberServer</native.mainClass>
+        <mcp-lib.version>1.0.0</mcp-lib.version>
     </properties>
 
     <dependencies>
@@ -24,13 +25,13 @@
         <dependency>
             <groupId>io.mcp</groupId>
             <artifactId>mcp-core</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${mcp-lib.version}</version>
         </dependency>
 
          <dependency>
             <groupId>io.mcp</groupId>
             <artifactId>mcp-random</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${mcp-lib.version}</version>
         </dependency>
  
     </dependencies>
