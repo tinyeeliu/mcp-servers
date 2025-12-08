@@ -525,14 +525,9 @@ class RandomNumberServerTest {
      */
     @Test
     void testStreamableHttpTransportClientGenerateRandom() throws Exception {
-        // Set up the StreamableServer with RandomService
-        StreamableServer mcpServer = new StreamableServer();
-        RandomService service = new RandomService();
-        mcpServer.initialize(service);
-
-        // Start McpHttpServer with Streamable HTTP transport
+        // Start McpHttpServer with Streamable HTTP transport (now auto-discovers services)
         int port = 18080;
-        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        McpHttpServer httpServer = new McpHttpServer(port);
         httpServer.startStreamableServer();
 
         java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
@@ -546,7 +541,7 @@ class RandomNumberServerTest {
 
             // Step 2: Send initialized notification
             java.net.http.HttpRequest initNotificationRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:" + port + "/mcp"))
+                    .uri(java.net.URI.create("http://localhost:" + port + "/random/mcp"))
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(createInitializedNotification()))
                     .header("Content-Type", "application/json")
                     .timeout(Duration.ofSeconds(5))
@@ -592,7 +587,6 @@ class RandomNumberServerTest {
 
         } finally {
             httpServer.stop();
-            mcpServer.shutdown();
         }
     }
 
@@ -610,7 +604,7 @@ class RandomNumberServerTest {
 
         // Start McpHttpServer with SSE transport
         int port = 18081;
-        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        McpHttpServer httpServer = new McpHttpServer(port);
         httpServer.startSseServer();
 
         try {
@@ -621,7 +615,7 @@ class RandomNumberServerTest {
             // Test SSE endpoint responds (GET /sse should return event-stream)
             java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:" + port + "/sse"))
+                    .uri(java.net.URI.create("http://localhost:" + port + "/random/sse"))
                     .GET()
                     .timeout(Duration.ofSeconds(2))
                     .build();
@@ -654,14 +648,14 @@ class RandomNumberServerTest {
 
         // Start McpHttpServer with SSE transport
         int port = 18083;
-        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        McpHttpServer httpServer = new McpHttpServer(port);
         httpServer.startSseServer();
 
         try {
             // Step 1: Establish SSE connection and get message endpoint
             java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
             java.net.http.HttpRequest sseRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:" + port + "/sse"))
+                    .uri(java.net.URI.create("http://localhost:" + port + "/random/sse"))
                     .GET()
                     .header("Accept", "text/event-stream")
                     .timeout(Duration.ofSeconds(5))
@@ -682,7 +676,7 @@ class RandomNumberServerTest {
                     while ((line = reader.readLine()) != null) {
                         collectedData.append(line).append("\n");
 
-                        if (line.startsWith("data: http://localhost:" + port + "/messages?sessionId=")) {
+                        if (line.startsWith("data: http://localhost:" + port + "/random/messages?sessionId=")) {
                             messageUrl = line.substring(6).trim(); // Remove "data: " prefix
                             gotEndpoint = true;
                             break; // We got what we need for the test
@@ -702,7 +696,7 @@ class RandomNumberServerTest {
             // Wait for SSE connection to establish and get message URL
             String messageUrl = sseFuture.get(10, TimeUnit.SECONDS);
             assertNotNull(messageUrl, "Should receive message endpoint URL");
-            assertTrue(messageUrl.contains("/messages?sessionId="), "Should contain message endpoint");
+            assertTrue(messageUrl.contains("/random/messages?sessionId="), "Should contain message endpoint");
 
             // Extract sessionId from URL
             String sessionId = messageUrl.substring(messageUrl.indexOf("sessionId=") + 10);
@@ -850,7 +844,7 @@ class RandomNumberServerTest {
 
         // Start McpHttpServer with both transports
         int port = 18082;
-        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        McpHttpServer httpServer = new McpHttpServer(port);
         httpServer.startServer();
 
         java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
@@ -867,7 +861,7 @@ class RandomNumberServerTest {
 
             // Step 2: Send initialized notification
             java.net.http.HttpRequest initNotificationRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:" + port + "/mcp"))
+                    .uri(java.net.URI.create("http://localhost:" + port + "/random/mcp"))
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(createInitializedNotification()))
                     .header("Content-Type", "application/json")
                     .timeout(Duration.ofSeconds(5))
@@ -913,7 +907,7 @@ class RandomNumberServerTest {
 
         // Start McpHttpServer with Streamable HTTP transport
         int port = 18084;
-        McpHttpServer httpServer = new McpHttpServer(mcpServer, port);
+        McpHttpServer httpServer = new McpHttpServer(port);
         httpServer.startStreamableServer();
 
         java.net.http.HttpClient httpClient = java.net.http.HttpClient.newHttpClient();
@@ -928,7 +922,7 @@ class RandomNumberServerTest {
 
             // Step 2: Send initialized notification
             java.net.http.HttpRequest initNotificationRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:" + port + "/mcp"))
+                    .uri(java.net.URI.create("http://localhost:" + port + "/random/mcp"))
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(createInitializedNotification()))
                     .header("Content-Type", "application/json")
                     .timeout(Duration.ofSeconds(5))
@@ -1053,7 +1047,7 @@ class RandomNumberServerTest {
      */
     private String sendHttpRequest(java.net.http.HttpClient httpClient, int port, String jsonRpcMessage) throws Exception {
         java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                .uri(java.net.URI.create("http://localhost:" + port + "/mcp"))
+                .uri(java.net.URI.create("http://localhost:" + port + "/random/mcp"))
                 .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonRpcMessage))
                 .header("Content-Type", "application/json")
                 .timeout(Duration.ofSeconds(10))

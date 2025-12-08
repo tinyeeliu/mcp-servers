@@ -38,14 +38,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Test dependency on core for ServiceUtility -->
-        <dependency>
-            <groupId>io.mcp</groupId>
-            <artifactId>mcp-core</artifactId>
-            <version>1.0.0</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
  
     </dependencies>
 

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,31 +15,34 @@ import java.util.concurrent.Executors;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import io.mcp.core.protocol.McpService;
+import io.mcp.core.utility.ServiceUtility;
+
 /**
  * Pure Java implementation of MCP HTTP server.
- * 
- * Supports both SSE and Streamable HTTP transport:
- * 
+ *
+ * Supports both SSE and Streamable HTTP transport with module-specific endpoints:
+ *
  * SSE Transport (legacy):
- * - GET /sse - Establishes SSE connection, returns endpoint URL
- * - POST /messages?sessionId=xxx - Sends messages to server
- * 
+ * - GET /{module}/sse - Establishes SSE connection, returns endpoint URL
+ * - POST /{module}/messages?sessionId=xxx - Sends messages to server
+ *
  * Streamable HTTP Transport (modern):
- * - POST /mcp - Handles JSON-RPC requests, can return JSON or SSE stream
+ * - POST /{module}/mcp - Handles JSON-RPC requests, can return JSON or SSE stream
  */
 public class McpHttpServer {
 
     private static final int DEFAULT_PORT = 8080;
-    
-    private final StreamableServer mcpServer;
+
+    private final Map<String, StreamableServer> moduleServers = new ConcurrentHashMap<>();
     private HttpServer httpServer;
     private final int port;
     
     // Session management for SSE connections
     private final Map<String, SseSession> sseSessions = new ConcurrentHashMap<>();
 
-    public McpHttpServer(StreamableServer mcpServer) {
-        this(mcpServer, getConfiguredPort());
+    public McpHttpServer() {
+        this(getConfiguredPort());
     }
 
     private static int getConfiguredPort() {
@@ -53,55 +57,81 @@ public class McpHttpServer {
         return DEFAULT_PORT;
     }
 
-    public McpHttpServer(StreamableServer mcpServer, int port) {
-        this.mcpServer = mcpServer;
+    public McpHttpServer(int port) {
         this.port = port;
+        initializeModuleServers();
+    }
+
+    private void initializeModuleServers() {
+        List<McpService> services = ServiceUtility.getRegisteredServices();
+        debug("Initializing module servers for", services.size(), "services");
+
+        for (McpService service : services) {
+            String moduleName = service.getModule();
+            StreamableServer server = new StreamableServer();
+            server.initialize(service);
+            moduleServers.put(moduleName, server);
+            debug("Initialized server for module:", moduleName);
+        }
     }
 
     /**
      * Start the server with SSE transport (legacy mode).
-     * 
-     * SSE transport uses:
-     * - GET /sse - Client connects here to establish SSE stream
-     * - POST /messages?sessionId=xxx - Client sends requests here
+     *
+     * SSE transport uses module-specific endpoints:
+     * - GET /{module}/sse - Client connects here to establish SSE stream
+     * - POST /{module}/messages?sessionId=xxx - Client sends requests here
      */
     public void startSseServer() throws IOException {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
-        
-        // SSE endpoint - client establishes SSE connection here
-        httpServer.createContext("/sse", this::handleSseConnection);
-        
-        // Messages endpoint - client sends requests here
-        httpServer.createContext("/messages", this::handleSseMessage);
-        
+
+        // Register module-specific SSE endpoints
+        for (String moduleName : moduleServers.keySet()) {
+            String ssePath = "/" + moduleName + "/sse";
+            String messagePath = "/" + moduleName + "/messages";
+
+            httpServer.createContext(ssePath, exchange -> handleModuleSseConnection(exchange, moduleName));
+            httpServer.createContext(messagePath, exchange -> handleModuleSseMessage(exchange, moduleName));
+        }
+
         // Use virtual threads for concurrent SSE connections
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
+
         System.out.println("MCP SSE Server running on http://localhost:" + port);
-        System.out.println("  SSE endpoint: http://localhost:" + port + "/sse");
-        System.out.println("  Message endpoint: http://localhost:" + port + "/messages");
+        for (String moduleName : moduleServers.keySet()) {
+            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + "/" + moduleName + "/sse");
+            System.out.println("  Module '" + moduleName + "' Message endpoint: http://localhost:" + port + "/" + moduleName + "/messages");
+        }
     }
 
     /**
      * Start the server with Streamable HTTP transport (modern mode).
-     * 
-     * Streamable HTTP uses a single endpoint:
-     * - POST /mcp - Handles all JSON-RPC requests
-     * 
+     *
+     * Streamable HTTP uses module-specific endpoints:
+     * - POST /{module}/mcp - Handles all JSON-RPC requests for each module
+     *
      * Response can be either:
      * - application/json for simple responses
      * - text/event-stream for streaming responses
      */
     public void startStreamableServer() throws IOException {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
-        
-        // Single endpoint for streamable HTTP
-        httpServer.createContext("/mcp", this::handleStreamableRequest);
-        
+
+        // Register module-specific endpoints for streamable HTTP
+        for (String moduleName : moduleServers.keySet()) {
+            String path = "/" + moduleName + "/mcp";
+            httpServer.createContext(path, exchange -> handleModuleStreamableRequest(exchange, moduleName));
+        }
+
         // Use virtual threads for concurrent connections
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
-        System.out.println("MCP Streamable HTTP Server running on http://localhost:" + port + "/mcp");
+
+        System.out.println("MCP Streamable HTTP Server running on http://localhost:" + port);
+        for (String moduleName : moduleServers.keySet()) {
+            System.out.println("  Module '" + moduleName + "' endpoint: http://localhost:" + port + "/" + moduleName + "/mcp");
+        }
     }
 
     /**
@@ -109,20 +139,27 @@ public class McpHttpServer {
      */
     public void startServer() throws IOException {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
-        
-        // Streamable HTTP endpoint
-        httpServer.createContext("/mcp", this::handleStreamableRequest);
-        
-        // SSE endpoints (legacy support)
-        httpServer.createContext("/sse", this::handleSseConnection);
-        httpServer.createContext("/messages", this::handleSseMessage);
-        
+
+        // Register module-specific endpoints for both transport types
+        for (String moduleName : moduleServers.keySet()) {
+            String mcpPath = "/" + moduleName + "/mcp";
+            String ssePath = "/" + moduleName + "/sse";
+            String messagePath = "/" + moduleName + "/messages";
+
+            httpServer.createContext(mcpPath, exchange -> handleModuleStreamableRequest(exchange, moduleName));
+            httpServer.createContext(ssePath, exchange -> handleModuleSseConnection(exchange, moduleName));
+            httpServer.createContext(messagePath, exchange -> handleModuleSseMessage(exchange, moduleName));
+        }
+
         // Use virtual threads for concurrent connections
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
+
         System.out.println("MCP HTTP Server running on http://localhost:" + port);
-        System.out.println("  Streamable endpoint: http://localhost:" + port + "/mcp");
-        System.out.println("  SSE endpoint: http://localhost:" + port + "/sse");
+        for (String moduleName : moduleServers.keySet()) {
+            System.out.println("  Module '" + moduleName + "' Streamable endpoint: http://localhost:" + port + "/" + moduleName + "/mcp");
+            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + "/" + moduleName + "/sse");
+        }
     }
 
     /**
@@ -143,9 +180,22 @@ public class McpHttpServer {
     }
 
     /**
-     * Handle Streamable HTTP POST requests.
+     * Handle module-specific Streamable HTTP POST requests.
      */
-    private void handleStreamableRequest(HttpExchange exchange) throws IOException {
+    private void handleModuleStreamableRequest(HttpExchange exchange, String moduleName) throws IOException {
+        StreamableServer server = moduleServers.get(moduleName);
+        if (server == null) {
+            sendError(exchange, 404, "Module not found: " + moduleName);
+            return;
+        }
+
+        handleStreamableRequest(exchange, server);
+    }
+
+    /**
+     * Handle Streamable HTTP POST requests with specified server.
+     */
+    private void handleStreamableRequest(HttpExchange exchange, StreamableServer server) throws IOException {
         if (!"POST".equals(exchange.getRequestMethod())) {
             sendError(exchange, 405, "Method Not Allowed");
             return;
@@ -154,32 +204,32 @@ public class McpHttpServer {
         try {
             String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             debug("Streamable request:", requestBody);
-            
+
             // Get or create session ID from header
             String sessionId = exchange.getRequestHeaders().getFirst("Mcp-Session-Id");
             if (sessionId == null) {
                 sessionId = UUID.randomUUID().toString();
             }
-            
+
             // Check Accept header for SSE preference
             String acceptHeader = exchange.getRequestHeaders().getFirst("Accept");
             boolean preferSse = acceptHeader != null && acceptHeader.contains("text/event-stream");
-            
+
             if (preferSse) {
                 // Return response as SSE stream
-                handleStreamableWithSse(exchange, requestBody, sessionId);
+                handleStreamableWithSse(exchange, requestBody, sessionId, server);
             } else {
                 // Return response as JSON
-                String response = mcpServer.handleRequestSync(requestBody, sessionId);
-                
+                String response = server.handleRequestSync(requestBody, sessionId);
+
                 // Notifications return null - send 202 Accepted with no body
                 if (response == null) {
                     exchange.getResponseHeaders().set("Mcp-Session-Id", sessionId);
                     exchange.sendResponseHeaders(202, -1);
                     return;
                 }
-                
-                exchange.getResponseHeaders().set("Content-Type", mcpServer.getContentType());
+
+                exchange.getResponseHeaders().set("Content-Type", server.getContentType());
                 exchange.getResponseHeaders().set("Mcp-Session-Id", sessionId);
                 byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, responseBytes.length);
@@ -196,17 +246,17 @@ public class McpHttpServer {
     /**
      * Handle Streamable HTTP request with SSE response.
      */
-    private void handleStreamableWithSse(HttpExchange exchange, String requestBody, String sessionId) throws IOException {
+    private void handleStreamableWithSse(HttpExchange exchange, String requestBody, String sessionId, StreamableServer server) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
         exchange.getResponseHeaders().set("Cache-Control", "no-cache");
         exchange.getResponseHeaders().set("Connection", "keep-alive");
         exchange.getResponseHeaders().set("Mcp-Session-Id", sessionId);
         exchange.sendResponseHeaders(200, 0);
-        
+
         try (OutputStream os = exchange.getResponseBody()) {
             // Process request and send response as SSE event
-            String response = mcpServer.handleRequestSync(requestBody, sessionId);
-            
+            String response = server.handleRequestSync(requestBody, sessionId);
+
             // Notifications return null - no SSE event to send
             if (response != null) {
                 String sseEvent = "event: message\ndata: " + response.replace("\n", "\ndata: ") + "\n\n";
@@ -217,9 +267,22 @@ public class McpHttpServer {
     }
 
     /**
-     * Handle SSE connection establishment (GET /sse).
+     * Handle module-specific SSE connection establishment (GET /{module}/sse).
      */
-    private void handleSseConnection(HttpExchange exchange) throws IOException {
+    private void handleModuleSseConnection(HttpExchange exchange, String moduleName) throws IOException {
+        StreamableServer server = moduleServers.get(moduleName);
+        if (server == null) {
+            sendError(exchange, 404, "Module not found: " + moduleName);
+            return;
+        }
+
+        handleSseConnection(exchange, server, moduleName);
+    }
+
+    /**
+     * Handle SSE connection establishment with specified server and module.
+     */
+    private void handleSseConnection(HttpExchange exchange, StreamableServer server, String moduleName) throws IOException {
         if (!"GET".equals(exchange.getRequestMethod())) {
             sendError(exchange, 405, "Method Not Allowed");
             return;
@@ -243,11 +306,11 @@ public class McpHttpServer {
 
         try {
             // Send endpoint event with message URL
-            String messageUrl = "http://localhost:" + port + "/messages?sessionId=" + sessionId;
+            String messageUrl = "http://localhost:" + port + "/" + moduleName + "/messages?sessionId=" + sessionId;
             String endpointEvent = "event: endpoint\ndata: " + messageUrl + "\n\n";
             os.write(endpointEvent.getBytes(StandardCharsets.UTF_8));
             os.flush();
-            debug("Sent endpoint event:", messageUrl);
+            debug("Sent endpoint event for module", moduleName + ":", messageUrl);
 
             // Keep connection alive until closed
             // The connection will be closed when the client disconnects
@@ -272,9 +335,22 @@ public class McpHttpServer {
     }
 
     /**
-     * Handle SSE message requests (POST /messages).
+     * Handle module-specific SSE message requests (POST /{module}/messages).
      */
-    private void handleSseMessage(HttpExchange exchange) throws IOException {
+    private void handleModuleSseMessage(HttpExchange exchange, String moduleName) throws IOException {
+        StreamableServer server = moduleServers.get(moduleName);
+        if (server == null) {
+            sendError(exchange, 404, "Module not found: " + moduleName);
+            return;
+        }
+
+        handleSseMessage(exchange, server);
+    }
+
+    /**
+     * Handle SSE message requests with specified server.
+     */
+    private void handleSseMessage(HttpExchange exchange, StreamableServer server) throws IOException {
         // Handle CORS preflight
         if ("OPTIONS".equals(exchange.getRequestMethod())) {
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
@@ -318,7 +394,7 @@ public class McpHttpServer {
             debug("SSE message request:", requestBody);
 
             // Process the request
-            String response = mcpServer.handleRequestSync(requestBody, sessionId);
+            String response = server.handleRequestSync(requestBody, sessionId);
 
             // Send response via SSE stream (null means notification - no response needed)
             if (response != null) {

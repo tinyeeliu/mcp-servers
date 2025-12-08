@@ -59,25 +59,16 @@ public class StandaloneLauncher {
             }
 
         } else if (transport.equals("http")) {
-            // Streamable HTTP transport
-            StreamableServer mcpServer = new StreamableServer();
-            mcpServer.initialize(service);
-            
-            McpHttpServer httpServer = new McpHttpServer(mcpServer);
+            // Streamable HTTP transport - now supports multiple modules
+            McpHttpServer httpServer = new McpHttpServer();
             httpServer.startStreamableServer();
         } else if (transport.equals("sse")) {
-            // SSE transport (legacy)
-            StreamableServer mcpServer = new StreamableServer();
-            mcpServer.initialize(service);
-            
-            McpHttpServer httpServer = new McpHttpServer(mcpServer);
+            // SSE transport (legacy) - now supports multiple modules
+            McpHttpServer httpServer = new McpHttpServer();
             httpServer.startSseServer();
         } else if (transport.equals("http-all")) {
-            // Both SSE and Streamable HTTP
-            StreamableServer mcpServer = new StreamableServer();
-            mcpServer.initialize(service);
-            
-            McpHttpServer httpServer = new McpHttpServer(mcpServer);
+            // Both SSE and Streamable HTTP - now supports multiple modules
+            McpHttpServer httpServer = new McpHttpServer();
             httpServer.startServer();
         }
     }
