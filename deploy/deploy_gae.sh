@@ -50,14 +50,7 @@ if [ "$DEBUG_MODE" = false ]; then
 fi
 
 # Step 1. Build the modules and mcp project
-
-./scripts/build_module.sh --clean
-
-# Build the main mcp service project
-echo "Building mcp service project..."
-cd projects/mcp
-mvn clean package -DskipTests
-cd ../..
+./scripts/build.sh
 
 # Step 2. Make a staging directory in target
 # Copy the image to the staging directory

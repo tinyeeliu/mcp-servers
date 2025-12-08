@@ -18,7 +18,7 @@ public class StatusCommand implements McpCommand{
         result.put("errorRedirected", Utility.isErrorRedirected());
         result.put("port", Utility.getConfiguredPort());
         result.put("fileLogging", Utility.isFileLogging());
-        result.put("version", "1.0.0");
+        result.put("version", "1.0.1");
         return CompletableFuture.completedFuture(result);
     }
     
