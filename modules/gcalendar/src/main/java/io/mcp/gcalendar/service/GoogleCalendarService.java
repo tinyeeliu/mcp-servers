@@ -5,7 +5,7 @@ import java.util.List;
 import io.mcp.core.base.BaseMcpService;
 import io.mcp.core.protocol.McpTool;
 import io.mcp.core.utility.Utility;
-import io.mcp.random.tool.GenerateRandom;
+import io.mcp.gcalendar.tool.AddEvent;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 
 public class GoogleCalendarService extends BaseMcpService{
@@ -25,7 +25,7 @@ public class GoogleCalendarService extends BaseMcpService{
 
     @Override
     public List<McpTool> getTools() {
-        return List.of(new GenerateRandom());
+        return List.of(new AddEvent());
     }
 
     @Override

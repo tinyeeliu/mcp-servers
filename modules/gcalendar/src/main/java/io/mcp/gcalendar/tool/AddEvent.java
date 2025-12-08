@@ -1,4 +1,4 @@
-package io.mcp.random.tool;
+package io.mcp.gcalendar.tool;
 
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
