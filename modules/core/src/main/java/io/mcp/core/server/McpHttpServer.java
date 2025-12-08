@@ -57,7 +57,7 @@ public class McpHttpServer {
 
     public McpHttpServer(int port) {
         this.port = port;
-        this.pathPrefix = ConfigUtility.getString("HTTP_PREFIX", "");
+        this.pathPrefix = ConfigUtility.getString("HTTP_PREFIX", "/mcp");
 
         debug("McpHttpServer constructor with port:", port);
         currentInstance = this;
