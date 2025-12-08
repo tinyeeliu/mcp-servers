@@ -12,6 +12,7 @@ public class Utility {
 
     private static final int DEFAULT_PORT = 8080;
     private static boolean DEBUG = false;
+    private static boolean FILE_LOGGING = false;
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final String ERROR_LOG_FILE = "mcp_server_error.log";
     private static PrintWriter errorLogWriter;
@@ -29,6 +30,14 @@ public class Utility {
         return stderrRedirected;
     }
 
+    public static void setFileLogging(boolean fileLogging) {
+        FILE_LOGGING = fileLogging;
+    }
+
+    public static boolean isFileLogging() {
+        return FILE_LOGGING;
+    }
+
 
 	public static boolean isNative(){
 
@@ -41,6 +50,11 @@ public class Utility {
      * This captures all stderr output, not just debug messages
      */
     public static void redirectStdErrToLog() {
+
+        if(!FILE_LOGGING){
+            return;
+        }
+
         if (stderrRedirected) {
             return; // Already redirected
         }
