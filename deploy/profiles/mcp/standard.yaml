@@ -18,4 +18,4 @@ env_variables:
   #GAE_LOCATION: us-central1
 
 #entrypoint: ./application -Xmx352m -Xss256k -Dmcp.http.port=$PORT
-entrypoint: java -Xmx352m -Xss256k -jar mcp-service-1.0.0.jar -Dhttp.port=$PORT
+entrypoint: java -Xmx352m -Xss256k -Dhttp.port=$PORT -jar mcp-service-1.0.0.jar
