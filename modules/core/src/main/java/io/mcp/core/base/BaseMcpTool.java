@@ -53,12 +53,89 @@ public abstract class BaseMcpTool implements McpTool {
         }
     }
     public void debugLog(CallToolResult result){
-        Utility.debug("XXX");
-        
+        StringBuilder sb = new StringBuilder();
+        sb.append("TOOL RESPONSE [").append(getModule()).append(".").append(getName()).append("] ");
+
+        // Add error status
+        if (result.isError() != null && result.isError()) {
+            sb.append("ERROR: ");
+        } else {
+            sb.append("SUCCESS: ");
+        }
+
+        // Add content summary
+        if (result.content() != null) {
+            sb.append(result.content().size()).append(" content items");
+            for (int i = 0; i < Math.min(result.content().size(), 3); i++) {
+                var content = result.content().get(i);
+                if (content instanceof McpSchema.TextContent textContent) {
+                    String text = textContent.text();
+                    if (text != null) {
+                        // Truncate long text for readability
+                        String preview = text.length() > 100 ? text.substring(0, 100) + "..." : text;
+                        sb.append(" [").append(preview.replaceAll("\\s+", " ")).append("]");
+                    }
+                } else {
+                    sb.append(" [").append(content.getClass().getSimpleName()).append("]");
+                }
+            }
+            if (result.content().size() > 3) {
+                sb.append(" ...");
+            }
+        } else {
+            sb.append("no content");
+        }
+
+        Utility.debug(sb.toString());
     }
 
     public void debugLog(McpAsyncServerExchange exchange, CallToolRequest request){
-        Utility.debug("XXX");
+        StringBuilder sb = new StringBuilder();
+        sb.append("TOOL REQUEST [").append(getModule()).append(".").append(getName()).append("] ");
+
+        // Add arguments
+        if (request.arguments() != null && !request.arguments().isEmpty()) {
+            sb.append("args: ");
+            boolean first = true;
+            for (var entry : request.arguments().entrySet()) {
+                if (!first) sb.append(", ");
+                sb.append(entry.getKey()).append("=").append(entry.getValue());
+                first = false;
+            }
+        } else {
+            sb.append("no args");
+        }
+
+        // Add metadata if available
+        if (request.meta() != null && !request.meta().isEmpty()) {
+            sb.append(" | meta: ");
+            boolean first = true;
+            for (var entry : request.meta().entrySet()) {
+                if (!first) sb.append(", ");
+                sb.append(entry.getKey()).append("=").append(entry.getValue());
+                first = false;
+            }
+        }
+
+        
+
+        // Add client info if available
+        if (exchange.getClientInfo() != null) {
+            sb.append(" | client: ").append(exchange.getClientInfo().name());
+            if (exchange.getClientInfo().version() != null) {
+                sb.append(" v").append(exchange.getClientInfo().version());
+            }
+        }
+
+        // Add session info from transport context if available
+        if (exchange.transportContext() != null) {
+            Object sessionId = exchange.transportContext().get("session-id");
+            if (sessionId != null) {
+                sb.append(" | session: ").append(sessionId);
+            }
+        }
+
+        Utility.debug(sb.toString());
     }
 
     @Override
