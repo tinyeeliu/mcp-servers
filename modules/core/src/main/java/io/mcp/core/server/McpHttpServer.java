@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import io.mcp.core.command.StatusCommand;
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.utility.ServiceUtility;
 import io.mcp.core.utility.Utility;
@@ -74,6 +75,9 @@ public class McpHttpServer {
     public void startSseServer() throws IOException {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
+        // Register status endpoint
+        httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
+
         // Register module-specific SSE endpoints
         for (String moduleName : moduleServers.keySet()) {
             String ssePath = "/" + moduleName + "/sse";
@@ -107,6 +111,9 @@ public class McpHttpServer {
     public void startStreamableServer() throws IOException {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
+        // Register status endpoint
+        httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
+
         // Register module-specific endpoints for streamable HTTP
         for (String moduleName : moduleServers.keySet()) {
             String path = "/" + moduleName + "/mcp";
@@ -128,6 +135,9 @@ public class McpHttpServer {
      */
     public void startServer() throws IOException {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
+
+        // Register status endpoint
+        httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
 
         // Register module-specific endpoints for both transport types
         for (String moduleName : moduleServers.keySet()) {
@@ -401,6 +411,37 @@ public class McpHttpServer {
             }
         } catch (Exception e) {
             debug("Error handling SSE message:", e.getMessage());
+            sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle POST /mcp/status.json requests.
+     */
+    private void handleStatusRequest(HttpExchange exchange) throws IOException {
+        if (!"POST".equals(exchange.getRequestMethod())) {
+            sendError(exchange, 405, "Method Not Allowed");
+            return;
+        }
+
+        try {
+            // Execute the StatusCommand
+            StatusCommand statusCommand = new StatusCommand();
+            Map<String, Object> statusResult = statusCommand.execute().join();
+
+            // Convert the Map to JSON using Jackson ObjectMapper
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String jsonResponse = objectMapper.writeValueAsString(statusResult);
+
+            // Send JSON response
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(responseBytes);
+            }
+        } catch (Exception e) {
+            debug("Error handling status request:", e.getMessage());
             sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
         }
     }
