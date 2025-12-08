@@ -2,7 +2,6 @@ package io.mcp.random;
 
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.server.StandaloneLauncher;
-import io.mcp.core.utility.Utility;
 import io.mcp.random.service.RandomService;
 
 public class RandomNumberServer {
@@ -15,8 +14,8 @@ public class RandomNumberServer {
             transport = args[0];
         }
 
-        Utility.setDebug(true);
-        Utility.redirectStdErrToLog();
+        //Utility.setDebug(true);
+        //Utility.redirectStdErrToLog();
 
         McpService service = new RandomService();
         StandaloneLauncher.launch(transport, service);
