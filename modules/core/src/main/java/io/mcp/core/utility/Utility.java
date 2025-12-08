@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 public class Utility {
 
+    private static final int DEFAULT_PORT = 8080;
     private static boolean DEBUG = false;
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final String ERROR_LOG_FILE = "mcp_server_error.log";
@@ -85,6 +86,18 @@ public class Utility {
         } else {
             writeToErrorLog(message);
         }
+    }
+
+    public static int getConfiguredPort() {
+        String portProperty = System.getProperty("http.port");
+        if (portProperty != null) {
+            try {
+                return Integer.parseInt(portProperty);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid http.port system property: " + portProperty + ", using default port " + DEFAULT_PORT);
+            }
+        }
+        return DEFAULT_PORT;
     }
 
     /**

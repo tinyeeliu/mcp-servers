@@ -17,6 +17,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.utility.ServiceUtility;
+import io.mcp.core.utility.Utility;
 
 /**
  * Pure Java implementation of MCP HTTP server.
@@ -32,7 +33,6 @@ import io.mcp.core.utility.ServiceUtility;
  */
 public class McpHttpServer {
 
-    private static final int DEFAULT_PORT = 8080;
 
     private final Map<String, StreamableServer> moduleServers = new ConcurrentHashMap<>();
     private HttpServer httpServer;
@@ -42,20 +42,9 @@ public class McpHttpServer {
     private final Map<String, SseSession> sseSessions = new ConcurrentHashMap<>();
 
     public McpHttpServer() {
-        this(getConfiguredPort());
+        this(Utility.getConfiguredPort());
     }
 
-    private static int getConfiguredPort() {
-        String portProperty = System.getProperty("http.port");
-        if (portProperty != null) {
-            try {
-                return Integer.parseInt(portProperty);
-            } catch (NumberFormatException e) {
-                System.err.println("Invalid http.port system property: " + portProperty + ", using default port " + DEFAULT_PORT);
-            }
-        }
-        return DEFAULT_PORT;
-    }
 
     public McpHttpServer(int port) {
         this.port = port;
