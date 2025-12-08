@@ -19,7 +19,10 @@ public class StandaloneLauncher {
 
     public static void main(String[] args) throws Exception {
   
-        String transport = args[0];
+        String transport = "http";
+        if(args.length > 0) {
+            transport = args[0];
+        }
         String moduleName = null;
         
         if(args.length > 1) {

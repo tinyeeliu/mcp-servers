@@ -135,10 +135,10 @@ public class McpHttpServer {
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
 
-        System.out.println("MCP SSE Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
+        debug("MCP SSE Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
         for (String moduleName : moduleServers.keySet()) {
-            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/sse"));
-            System.out.println("  Module '" + moduleName + "' Message endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/messages"));
+            debug("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/sse"));
+            debug("  Module '" + moduleName + "' Message endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/messages"));
         }
     }
 
@@ -173,9 +173,9 @@ public class McpHttpServer {
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
 
-        System.out.println("MCP Streamable HTTP Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
+        debug("MCP Streamable HTTP Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
         for (String moduleName : moduleServers.keySet()) {
-            System.out.println("  Module '" + moduleName + "' endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/mcp"));
+            debug("  Module '" + moduleName + "' endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName));
         }
     }
 
@@ -207,10 +207,10 @@ public class McpHttpServer {
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
 
-        System.out.println("MCP HTTP Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
+        debug("MCP HTTP Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
         for (String moduleName : moduleServers.keySet()) {
-            System.out.println("  Module '" + moduleName + "' Streamable endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/mcp"));
-            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/sse"));
+            debug("  Module '" + moduleName + "' Streamable endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/mcp"));
+            debug("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/sse"));
         }
     }
 

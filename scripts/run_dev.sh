@@ -22,4 +22,4 @@ kill -9 $(lsof -ti:8080 2>/dev/null) 2>/dev/null || true
 
 # Run the uber jar
 echo "Starting MCP server from uber jar..."
-java -jar target/mcp-service-1.0.0.jar
+java -DHTTP_PREFIX=/api/v2/mcp -jar target/mcp-service-1.0.0.jar
