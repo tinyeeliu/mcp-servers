@@ -43,16 +43,19 @@ public class McpHttpServer {
     private final Map<String, SseSession> sseSessions = new ConcurrentHashMap<>();
 
     public McpHttpServer() {
+        debug("McpHttpServer constructor");
         this(Utility.getConfiguredPort());
     }
 
 
     public McpHttpServer(int port) {
         this.port = port;
+        debug("McpHttpServer constructor with port:", port);
         initializeModuleServers();
     }
 
     private void initializeModuleServers() {
+        debug("Initializing module servers");
         List<McpService> services = ServiceUtility.getRegisteredServices();
         debug("Initializing module servers for", services.size(), "services");
 
