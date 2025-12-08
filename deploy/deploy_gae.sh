@@ -18,7 +18,7 @@ VERSION="${2:-$(date +'%Y%m%d-%H%M')}"
 
 # Step 1. Build the native image of mcp project
 
-./scripts/build.sh
+./scripts/build_module.sh
 
 # Step 2. Make a staging directory in target
 # Copy the image to the staging directory
