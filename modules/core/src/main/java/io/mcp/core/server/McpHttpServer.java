@@ -71,6 +71,11 @@ public class McpHttpServer {
         return currentInstance;
     }
 
+    private String applyModulePathPrefix(String moduleName) {
+        
+        return applyPathPrefix("/" + moduleName);
+    }
+
     /**
      * Apply the configured path prefix to a path.
      * Returns the path unchanged if pathPrefix is empty or null.
@@ -112,15 +117,15 @@ public class McpHttpServer {
         // Register status endpoint
         httpServer.createContext(applyPathPrefix("/status.json"), this::handleStatusRequest);
 
-        // Register health endpoint
-        httpServer.createContext(applyPathPrefix("/health"), this::handleHealthRequest);
-        httpServer.createContext(applyPathPrefix("/_ah/warmup"), this::handleWarmupRequest);
+        // Register health endpoint (no prefix)
+        httpServer.createContext("/health", this::handleHealthRequest);
+        httpServer.createContext("/_ah/warmup", this::handleWarmupRequest);
 
 
         // Register module-specific SSE endpoints
         for (String moduleName : moduleServers.keySet()) {
-            String ssePath = applyPathPrefix("/" + moduleName + "/sse");
-            String messagePath = applyPathPrefix("/" + moduleName + "/messages");
+            String ssePath = applyModulePathPrefix(moduleName) + "/sse";
+            String messagePath = applyModulePathPrefix(moduleName) + "/messages";
 
             httpServer.createContext(ssePath, exchange -> handleModuleSseConnection(exchange, moduleName));
             httpServer.createContext(messagePath, exchange -> handleModuleSseMessage(exchange, moduleName));
@@ -153,14 +158,14 @@ public class McpHttpServer {
         // Register status endpoint
         httpServer.createContext(applyPathPrefix("/status.json"), this::handleStatusRequest);
 
-        // Register health endpoint
-        httpServer.createContext(applyPathPrefix("/health"), this::handleHealthRequest);
-        httpServer.createContext(applyPathPrefix("/_ah/warmup"), this::handleWarmupRequest);
+        // Register health endpoint (no prefix)
+        httpServer.createContext("/health", this::handleHealthRequest);
+        httpServer.createContext("/_ah/warmup", this::handleWarmupRequest);
 
 
         // Register module-specific endpoints for streamable HTTP
         for (String moduleName : moduleServers.keySet()) {
-            String path = applyPathPrefix("/" + moduleName + "/mcp");
+            String path = applyModulePathPrefix(moduleName);
             httpServer.createContext(path, exchange -> handleModuleStreamableRequest(exchange, moduleName));
         }
 
@@ -183,15 +188,15 @@ public class McpHttpServer {
         // Register status endpoint
         httpServer.createContext(applyPathPrefix("/status.json"), this::handleStatusRequest);
 
-        // Register health endpoint
-        httpServer.createContext(applyPathPrefix("/health"), this::handleHealthRequest);
-        httpServer.createContext(applyPathPrefix("/_ah/warmup"), this::handleWarmupRequest);
+        // Register health endpoint (no prefix)
+        httpServer.createContext("/health", this::handleHealthRequest);
+        httpServer.createContext("/_ah/warmup", this::handleWarmupRequest);
 
         // Register module-specific endpoints for both transport types
         for (String moduleName : moduleServers.keySet()) {
-            String mcpPath = applyPathPrefix("/" + moduleName + "/mcp");
-            String ssePath = applyPathPrefix("/" + moduleName + "/sse");
-            String messagePath = applyPathPrefix("/" + moduleName + "/messages");
+            String mcpPath = applyModulePathPrefix(moduleName);
+            String ssePath = applyModulePathPrefix(moduleName) + "/sse";
+            String messagePath = applyModulePathPrefix(moduleName) + "/messages";
 
             httpServer.createContext(mcpPath, exchange -> handleModuleStreamableRequest(exchange, moduleName));
             httpServer.createContext(ssePath, exchange -> handleModuleSseConnection(exchange, moduleName));

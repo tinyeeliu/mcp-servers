@@ -83,7 +83,7 @@ if [ "$DEBUG_MODE" = true ]; then
     echo "JAR file: $STAGING_DIR/mcp-service-1.0.0.jar"
 
     # Run the JAR file locally
-    java -jar "$STAGING_DIR/mcp-service-1.0.0.jar"
+    java -DHTTP_PREFIX=/api/v2/mcp -jar "$STAGING_DIR/mcp-service-1.0.0.jar"
 else
     echo "Step 3: Deploying to Google App Engine..."
     echo "Using version: $VERSION"
