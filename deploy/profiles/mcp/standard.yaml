@@ -12,10 +12,10 @@ automatic_scaling:
 service: mcp-v2
 
 inbound_services:
-#  - warmup
+  - warmup
 
 env_variables:
-  #GAE_LOCATION: us-central1
+  HTTP_PREFIX: /api/v2/mcp
 
 #entrypoint: ./application -Xmx352m -Xss256k -Dmcp.http.port=$PORT
 entrypoint: java -Xmx352m -Xss256k -Dhttp.port=$PORT -jar mcp-service-1.0.0.jar
