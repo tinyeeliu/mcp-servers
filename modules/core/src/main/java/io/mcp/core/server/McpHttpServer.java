@@ -20,6 +20,7 @@ import com.sun.net.httpserver.HttpServer;
 import io.mcp.core.command.HealthCommand;
 import io.mcp.core.command.StatusCommand;
 import io.mcp.core.command.WarmupCommand;
+import io.mcp.core.protocol.McpCommand;
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.utility.ServiceUtility;
 import io.mcp.core.utility.Utility;
@@ -452,22 +453,22 @@ public class McpHttpServer {
     }
 
     /**
-     * Handle POST /mcp/status.json requests.
+     * Generic handler for command-based HTTP requests.
      */
-    private void handleStatusRequest(HttpExchange exchange) throws IOException {
-        if (!"POST".equals(exchange.getRequestMethod())) {
+    private void handleCommandRequest(HttpExchange exchange, String expectedMethod, java.util.function.Supplier<McpCommand> commandSupplier) throws IOException {
+        if (!expectedMethod.equals(exchange.getRequestMethod())) {
             sendError(exchange, 405, "Method Not Allowed");
             return;
         }
 
         try {
-            // Execute the StatusCommand
-            StatusCommand statusCommand = new StatusCommand();
-            Map<String, Object> statusResult = statusCommand.execute().join();
+            // Execute the command
+            McpCommand command = commandSupplier.get();
+            Map<String, Object> commandResult = command.execute().join();
 
             // Convert the Map to JSON using Jackson ObjectMapper
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            String jsonResponse = objectMapper.writeValueAsString(statusResult);
+            String jsonResponse = objectMapper.writeValueAsString(commandResult);
 
             // Send JSON response
             exchange.getResponseHeaders().set("Content-Type", "application/json");
@@ -477,71 +478,30 @@ public class McpHttpServer {
                 os.write(responseBytes);
             }
         } catch (Exception e) {
-            debug("Error handling status request:", e.getMessage());
+            debug("Error handling command request:", e.getMessage());
             sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Handle POST /mcp/status.json requests.
+     */
+    private void handleStatusRequest(HttpExchange exchange) throws IOException {
+        handleCommandRequest(exchange, "POST", StatusCommand::new);
     }
 
     /**
      * Handle GET /health requests.
      */
     private void handleHealthRequest(HttpExchange exchange) throws IOException {
-        if (!"GET".equals(exchange.getRequestMethod())) {
-            sendError(exchange, 405, "Method Not Allowed");
-            return;
-        }
-
-        try {
-            // Execute the HealthCommand
-            HealthCommand healthCommand = new HealthCommand();
-            Map<String, Object> healthResult = healthCommand.execute().join();
-
-            // Convert the Map to JSON using Jackson ObjectMapper
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            String jsonResponse = objectMapper.writeValueAsString(healthResult);
-
-            // Send JSON response
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(200, responseBytes.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(responseBytes);
-            }
-        } catch (Exception e) {
-            debug("Error handling health request:", e.getMessage());
-            sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
-        }
+        handleCommandRequest(exchange, "GET", HealthCommand::new);
     }
 
     /**
      * Handle GET /_ah/warmup requests.
      */
     private void handleWarmupRequest(HttpExchange exchange) throws IOException {
-        if (!"GET".equals(exchange.getRequestMethod())) {
-            sendError(exchange, 405, "Method Not Allowed");
-            return;
-        }
-
-        try {
-            // Execute the WarmupCommand
-            WarmupCommand warmupCommand = new WarmupCommand();
-            Map<String, Object> warmupResult = warmupCommand.execute().join();
-
-            // Convert the Map to JSON using Jackson ObjectMapper
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            String jsonResponse = objectMapper.writeValueAsString(warmupResult);
-
-            // Send JSON response
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(200, responseBytes.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(responseBytes);
-            }
-        } catch (Exception e) {
-            debug("Error handling warmup request:", e.getMessage());
-            sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
-        }
+        handleCommandRequest(exchange, "GET", WarmupCommand::new);
     }
 
     /**
