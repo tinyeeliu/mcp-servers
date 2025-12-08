@@ -5,7 +5,9 @@ import static io.mcp.core.utility.Utility.debug;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +38,7 @@ import io.mcp.core.utility.Utility;
  */
 public class McpHttpServer {
 
+    private static McpHttpServer currentInstance;
 
     private final Map<String, StreamableServer> moduleServers = new ConcurrentHashMap<>();
     private HttpServer httpServer;
@@ -53,7 +56,15 @@ public class McpHttpServer {
     public McpHttpServer(int port) {
         this.port = port;
         debug("McpHttpServer constructor with port:", port);
+        currentInstance = this;
         initializeModuleServers();
+    }
+
+    /**
+     * Get the current server instance.
+     */
+    public static McpHttpServer getCurrentInstance() {
+        return currentInstance;
     }
 
     private void initializeModuleServers() {
@@ -126,12 +137,8 @@ public class McpHttpServer {
 
         // Register health endpoint
         httpServer.createContext("/health", this::handleHealthRequest);
+        httpServer.createContext("/_ah/warmup", this::handleWarmupRequest);
 
-        // Register health endpoint
-        httpServer.createContext("/health", this::handleHealthRequest);
-
-        // Register health endpoint
-        httpServer.createContext("/health", this::handleHealthRequest);
 
         // Register module-specific endpoints for streamable HTTP
         for (String moduleName : moduleServers.keySet()) {
@@ -199,9 +206,10 @@ public class McpHttpServer {
                 session.close();
             }
             sseSessions.clear();
-            
+
             httpServer.stop(0);
             httpServer = null;
+            currentInstance = null;
             debug("MCP HTTP Server stopped");
         }
     }
@@ -557,10 +565,53 @@ public class McpHttpServer {
     }
 
     /**
-     * Check if the server is running.
+     * Check if the server is running (basic check).
      */
     public boolean isRunning() {
         return httpServer != null;
+    }
+
+    /**
+     * Check if the server is actually responding by testing socket connection.
+     */
+    public boolean isServerResponding() {
+        if (!isRunning()) {
+            return false;
+        }
+
+        try (Socket socket = new Socket("localhost", port)) {
+            // If we can connect, the server is at least listening
+            return true;
+        } catch (IOException e) {
+            // Connection failed - server might have crashed
+            return false;
+        }
+    }
+
+    /**
+     * Get comprehensive server health information.
+     */
+    public Map<String, Object> getServerHealth() {
+        Map<String, Object> health = new HashMap<>();
+        boolean basicRunning = isRunning();
+        boolean responding = isServerResponding();
+
+        health.put("running", basicRunning);
+        health.put("responding", responding);
+        health.put("port", port);
+
+        if (basicRunning && responding) {
+            health.put("status", "UP");
+            health.put("message", "HTTP server is running and accepting connections");
+        } else if (basicRunning && !responding) {
+            health.put("status", "DOWN");
+            health.put("message", "HTTP server instance exists but is not responding (possible crash)");
+        } else {
+            health.put("status", "DOWN");
+            health.put("message", "HTTP server is not running");
+        }
+
+        return health;
     }
 
     /**
