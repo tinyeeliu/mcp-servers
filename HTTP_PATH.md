@@ -1,10 +1,10 @@
 # HTTP Path Strategy
 
-This applies to StremableHttp and SSE server.
+This applies to McpHttpServer.
 
 # Individual module
 
-For each service implementing McpService and registered, listen to path:
+For each service implementing McpService and returned by ServiceUtility, listen to path:
 
 /{module}/mcp
 

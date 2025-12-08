@@ -28,6 +28,11 @@ public class RandomService extends BaseMcpService{
         return List.of(new GenerateRandom());
     }
 
+    @Override
+    public String getModule() {
+        return "random";
+    }
+
 
 
 }
