@@ -50,6 +50,11 @@ public class StandaloneLauncher {
                     return;
                 }
             }
+        }else if(services.size() > 1) {
+            if("stdio".equals(transport)) {
+                throw new IllegalArgumentException("stdio transport is not supported for multiple modules");
+            }
+            launch(transport, null);
         }
 
     }

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import io.mcp.core.protocol.McpTool;
 import io.mcp.core.utility.JsonSchemaUtility;
+import io.mcp.core.utility.Utility;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import reactor.core.publisher.Mono;
@@ -78,8 +79,10 @@ public abstract class BaseMcpTool implements McpTool {
 
     private JsonNode loadJsonSchema(String type) throws IOException {
     
-        String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/"+ getModule() + "/"+ type + "/" + getName() + ".json");
+        String path = "io/mcp/spec/"+ getModule() + "/"+ type + "/" + getName() + ".json";
+        String jsonSchema = JsonSchemaUtility.loadJsonSchema(path);
         if (jsonSchema == null) {
+            Utility.debug("No " + type + " schema found for " + path);
             return null;
         }
         JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
