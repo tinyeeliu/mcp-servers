@@ -127,7 +127,7 @@ public class Utility {
             errorLogWriter.flush();
         } catch (IOException e) {
             // Fallback to stderr if file logging fails
-            System.err.println("Failed to write to error log: " + e.getMessage());
+            System.err.println("Failed to write to error log 2: " + e.getMessage());
             System.err.println(message);
         }
     }
