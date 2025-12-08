@@ -1,20 +1,53 @@
 #!/bin/bash
 
-# Usage: ./deploy/deploy_gae.sh <PROJECT_ID> [VERSION]
+# Usage: ./deploy/deploy_gae.sh <PROJECT_ID> [VERSION] [--debug]
 # Example: ./deploy/deploy_gae.sh my-gcp-project
 # Example: ./deploy/deploy_gae.sh my-gcp-project v1.2.3
+# Example: ./deploy/deploy_gae.sh my-gcp-project --debug
 
-if [ $# -lt 1 ]; then
-    echo "Error: PROJECT_ID is required"
-    echo "Usage: $0 <PROJECT_ID> [VERSION]"
+# Parse arguments
+DEBUG_MODE=false
+PROJECT_ID=""
+VERSION=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --debug)
+            DEBUG_MODE=true
+            shift
+            ;;
+        *)
+            if [ -z "$PROJECT_ID" ]; then
+                PROJECT_ID="$1"
+            elif [ -z "$VERSION" ]; then
+                VERSION="$1"
+            else
+                echo "Error: Too many arguments"
+                echo "Usage: $0 <PROJECT_ID> [VERSION] [--debug]"
+                echo "Examples:"
+                echo "  $0 my-gcp-project                    # Uses timestamp version"
+                echo "  $0 my-gcp-project v1.2.3            # Uses specified version"
+                echo "  $0 my-gcp-project --debug           # Runs locally for debugging"
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [ -z "$PROJECT_ID" ] && [ "$DEBUG_MODE" = false ]; then
+    echo "Error: PROJECT_ID is required when not in debug mode"
+    echo "Usage: $0 <PROJECT_ID> [VERSION] [--debug]"
     echo "Examples:"
     echo "  $0 my-gcp-project                    # Uses timestamp version"
     echo "  $0 my-gcp-project v1.2.3            # Uses specified version"
+    echo "  $0 my-gcp-project --debug           # Runs locally for debugging"
     exit 1
 fi
 
-PROJECT_ID="$1"
-VERSION="${2:-$(date +'%Y%m%d-%H%M')}"
+if [ "$DEBUG_MODE" = false ]; then
+    VERSION="${VERSION:-$(date +'%Y%m%d-%H%M')}"
+fi
 
 # Step 1. Build the native image of mcp project
 
@@ -44,10 +77,18 @@ chmod +x "$STAGING_DIR/application"
 echo "Staging directory created at: $STAGING_DIR"
 
 
-# Step 3. Deploy with gcloud
+# Step 3. Deploy or run locally
 
-echo "Step 3: Deploying to Google App Engine..."
-echo "Using version: $VERSION"
+if [ "$DEBUG_MODE" = true ]; then
+    echo "Step 3: Running application locally for debugging..."
+    echo "JAR file: $STAGING_DIR/mcp-service-1.0.0.jar"
 
-# Deploy with gcloud
-gcloud app deploy "$STAGING_DIR/app.yaml" --project "$PROJECT_ID" --version "$VERSION" 
+    # Run the JAR file locally
+    java -jar "$STAGING_DIR/mcp-service-1.0.0.jar"
+else
+    echo "Step 3: Deploying to Google App Engine..."
+    echo "Using version: $VERSION"
+
+    # Deploy with gcloud
+    gcloud app deploy "$STAGING_DIR/app.yaml" --project "$PROJECT_ID" --version "$VERSION"
+fi 
