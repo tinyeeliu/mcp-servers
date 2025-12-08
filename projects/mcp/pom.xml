@@ -14,9 +14,7 @@
     <name>MCP Service</name>
     <description>A sample project that include multiple MCP services</description>
 
-    <!-- TODO: Fix me -->
     <properties>
-        <native.mainClass>io.mcp.random.RandomNumberServer</native.mainClass>
         <mcp-lib.version>1.0.0</mcp-lib.version>
     </properties>
 
@@ -28,9 +26,15 @@
             <version>${mcp-lib.version}</version>
         </dependency>
 
-         <dependency>
+        <dependency>
             <groupId>io.mcp</groupId>
             <artifactId>mcp-random</artifactId>
+            <version>${mcp-lib.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.mcp</groupId>
+            <artifactId>mcp-gcalendar</artifactId>
             <version>${mcp-lib.version}</version>
         </dependency>
  
@@ -52,7 +56,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>io.mcp.random.RandomNumberServer</mainClass>
+                                    <mainClass>io.mcp.core.server.StandaloneLauncher</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>

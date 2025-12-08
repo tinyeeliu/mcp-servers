@@ -15,6 +15,7 @@
     <modules>
         <module>modules/core</module>
         <module>modules/random</module>
+        <module>modules/gcalendar</module>
     </modules>
 
     <properties>

@@ -1,8 +1,10 @@
 package io.mcp.core.server;
 
 import java.io.IOException;
+import java.util.List;
 
 import io.mcp.core.protocol.McpService;
+import io.mcp.core.utility.ServiceUtility;
 import io.mcp.core.utility.Utility;
 
 
@@ -18,19 +20,35 @@ public class StandaloneLauncher {
     public static void main(String[] args) throws Exception {
   
         String transport = args[0];
-        String classPath = args[1];
-
-        Utility.setDebug(true);
-        if(args.length > 2) {
-            String debug = args[2];
-            if("debug".equals(debug)) {
-                Utility.redirectStdErrToLog();
-            } 
+        String moduleName = null;
+        
+        if(args.length > 1) {
+            moduleName = args[1];
         }
 
-        Class<?> serviceClass = Class.forName(classPath);
-        McpService service = (McpService) serviceClass.getDeclaredConstructor().newInstance();
-        launch(transport, service);
+        Utility.setDebug(true);
+       
+        List<McpService> services = ServiceUtility.getRegisteredServices();
+
+        Utility.debug("Services founded: " + services.size());
+        for(McpService service : services) {
+            Utility.debug("Service: " + service.getModule() + " - " + service.getClass().getName());
+        }
+
+
+        if(services.size() == 1) {
+            launch(transport, services.get(0));
+            return;
+        }else if(moduleName != null){ 
+            Utility.debug("Launching module: " + moduleName);
+            for (McpService service : services) {
+                if(service.getModule().equals(moduleName)) {
+                    launch(transport, service);
+                    return;
+                }
+            }
+        }
+
     }
 
  

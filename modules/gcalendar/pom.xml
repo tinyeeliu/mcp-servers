@@ -11,33 +11,45 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>mcp-core</artifactId>
+    <artifactId>mcp-gcalendar</artifactId>
     <packaging>jar</packaging>
 
-    <name>MCP Core</name>
-    <description>Core interfaces and classes shared by all MCP modules</description>
+    <name>MCP Google Calendar</name>
+    <description>A MCP service that allows you to interact with Google Calendar</description>
 
 
     <dependencies>
 
+
         <dependency>
-            <groupId>io.modelcontextprotocol.sdk</groupId>
-            <artifactId>mcp</artifactId>
+            <groupId>io.mcp</groupId>
+            <artifactId>mcp-core</artifactId>
+            <version>1.0.0</version>
         </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+
+ 
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>io.mcp.core.server.StandaloneLauncher</mainClass>
+                    <commandlineArgs>http gcalendar</commandlineArgs>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
-
 
 </project>
 
