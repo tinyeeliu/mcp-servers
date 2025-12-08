@@ -1,5 +1,5 @@
 {
-  "name": "generateRandom",
+  "name": "addEvent",
   "description": "Generates a random integer between 0 (inclusive) and the specified bound (exclusive)",
   "inputSchema": {
     "type": "object",
