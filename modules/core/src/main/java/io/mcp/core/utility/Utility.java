@@ -24,6 +24,11 @@ public class Utility {
         return DEBUG;
     }
 
+    public static boolean isErrorRedirected() {
+        return stderrRedirected;
+    }
+
+
 	public static boolean isNative(){
 
 		return "Substrate VM".equals(System.getProperty("java.vm.name"));
