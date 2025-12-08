@@ -17,6 +17,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import io.mcp.core.command.HealthCommand;
 import io.mcp.core.command.StatusCommand;
+import io.mcp.core.command.WarmupCommand;
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.utility.ServiceUtility;
 import io.mcp.core.utility.Utility;
@@ -500,6 +501,37 @@ public class McpHttpServer {
             }
         } catch (Exception e) {
             debug("Error handling health request:", e.getMessage());
+            sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle GET /_ah/warmup requests.
+     */
+    private void handleWarmupRequest(HttpExchange exchange) throws IOException {
+        if (!"GET".equals(exchange.getRequestMethod())) {
+            sendError(exchange, 405, "Method Not Allowed");
+            return;
+        }
+
+        try {
+            // Execute the WarmupCommand
+            WarmupCommand warmupCommand = new WarmupCommand();
+            Map<String, Object> warmupResult = warmupCommand.execute().join();
+
+            // Convert the Map to JSON using Jackson ObjectMapper
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String jsonResponse = objectMapper.writeValueAsString(warmupResult);
+
+            // Send JSON response
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(responseBytes);
+            }
+        } catch (Exception e) {
+            debug("Error handling warmup request:", e.getMessage());
             sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
         }
     }
