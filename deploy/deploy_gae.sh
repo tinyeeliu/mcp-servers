@@ -30,6 +30,8 @@ echo "Step 2: Creating staging directory and copying files..."
 STAGING_DIR="projects/mcp/target/appengine-staging"
 mkdir -p "$STAGING_DIR"
 
+rm "$STAGING_DIR/*"
+
 # Copy the native image and rename it to 'application' (as expected by entrypoint)
 cp "projects/mcp/target/mcp-service-1.0.0.jar" "$STAGING_DIR/mcp-service-1.0.0.jar"
 
