@@ -22,6 +22,7 @@ import io.mcp.core.command.StatusCommand;
 import io.mcp.core.command.WarmupCommand;
 import io.mcp.core.protocol.McpCommand;
 import io.mcp.core.protocol.McpService;
+import io.mcp.core.utility.ConfigUtility;
 import io.mcp.core.utility.ServiceUtility;
 import io.mcp.core.utility.Utility;
 
@@ -44,18 +45,16 @@ public class McpHttpServer {
     private final Map<String, StreamableServer> moduleServers = new ConcurrentHashMap<>();
     private HttpServer httpServer;
     private final int port;
-    
+    private final String pathPrefix;
+
     // Session management for SSE connections
     private final Map<String, SseSession> sseSessions = new ConcurrentHashMap<>();
 
+
     public McpHttpServer() {
-        debug("McpHttpServer constructor");
-        this(Utility.getConfiguredPort());
-    }
+        this.port = Utility.getConfiguredPort();
+        this.pathPrefix = ConfigUtility.getString("HTTP_PREFIX", "/");
 
-
-    public McpHttpServer(int port) {
-        this.port = port;
         debug("McpHttpServer constructor with port:", port);
         currentInstance = this;
         initializeModuleServers();
