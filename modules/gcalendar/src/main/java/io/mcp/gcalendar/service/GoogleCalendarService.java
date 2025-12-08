@@ -1,4 +1,4 @@
-package io.mcp.random.service;
+package io.mcp.gcalendar.service;
 
 import java.util.List;
 

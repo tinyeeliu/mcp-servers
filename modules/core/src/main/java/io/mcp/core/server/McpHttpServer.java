@@ -91,7 +91,7 @@ public class McpHttpServer {
     }
 
     private void initializeModuleServers() {
-        debug("Initializing module servers");
+       
         List<McpService> services = ServiceUtility.getRegisteredServices();
         debug("Initializing module servers for", services.size(), "services");
 
