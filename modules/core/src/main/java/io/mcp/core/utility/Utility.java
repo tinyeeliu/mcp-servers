@@ -96,11 +96,12 @@ public class Utility {
 
         String message = sb.toString();
 
+        
         // If stderr is redirected to the log file, use stderr to avoid double logging
         if (FILE_LOGGING && stderrRedirected) {
-            System.err.println(message);
-        } else {
             writeToErrorLog(message);
+        } else {
+            System.err.println(message);
         }
     }
 
