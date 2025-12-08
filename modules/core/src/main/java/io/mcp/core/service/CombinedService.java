@@ -1,6 +1,7 @@
 package io.mcp.core.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.protocol.McpTool;
@@ -34,32 +35,35 @@ public class CombinedService implements McpService{
 
     @Override
     public List<McpTool> getTools() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTools'");
+        return services.stream()
+                .flatMap(service -> service.getTools().stream())
+                .collect(Collectors.toList());
     }
 
     @Override
     public String getModule() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getModule'");
+        return "root";
     }
 
     @Override
     public List<AsyncPromptSpecification> getPromptSpecifications() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPromptSpecifications'");
+        return services.stream()
+                .flatMap(service -> service.getPromptSpecifications().stream())
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<AsyncResourceSpecification> getResourceSpecifications() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getResourceSpecifications'");
+        return services.stream()
+                .flatMap(service -> service.getResourceSpecifications().stream())
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<AsyncResourceTemplateSpecification> getResourceTemplateSpecifications() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getResourceTemplateSpecifications'");
+        return services.stream()
+                .flatMap(service -> service.getResourceTemplateSpecifications().stream())
+                .collect(Collectors.toList());
     }
     
 }
