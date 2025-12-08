@@ -37,6 +37,22 @@ This guide shows how to add a new MCP module. The `random` module is a minimal, 
 7) Tests  
    - Add transport and tool-behavior tests under `src/test/java/io/mcp/<module>/`.
 
+## MCP endpoints and specs (quick mental model)
+- Tools
+  - `tools/list` advertises tools (name/description/schema).
+  - `tools/call` runs a tool with arguments validated against its JSON schema.
+  - Spec files live in `spec/<module>/tool/*.json` and define `name`, `description`, and `inputSchema`.
+- Prompts
+  - `prompts/list` discovers prompt presets; `prompts/get` returns a prompt by name (parameterized if needed).
+  - Specs in `spec/<module>/prompt/*.json` declare titles, descriptions, and argument requirements.
+- Resources
+  - `resources/list` advertises external URIs; `resources/read` fetches one.
+  - Specs in `spec/<module>/resource/*.json` list URIs with metadata (`name`, `title`, `mimeType`).
+- Templates
+  - `resources/templates/list` and `resources/templates/read` expose URI templates that clients can fill.
+  - Specs in `spec/<module>/template/*.json` declare `uriTemplate` entries plus human-friendly names.
+- Keep tool names and module slugs consistent across Java classes (`getName()`, `getModule()`) and all JSON specs so discovery and validation line up.
+
 ## Random module as a template
 - Service (`RandomService`) demonstrates the minimal overrides:
 ```java
