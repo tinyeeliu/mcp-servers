@@ -256,7 +256,7 @@ public class McpHttpServer {
 
         try {
             String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-            debug("Streamable request:", requestBody);
+            //debug("Streamable request:", requestBody);
 
             // Get or create session ID from header
             String sessionId = exchange.getRequestHeaders().getFirst("Mcp-Session-Id");
