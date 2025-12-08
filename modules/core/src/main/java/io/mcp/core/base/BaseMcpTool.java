@@ -3,14 +3,18 @@ package io.mcp.core.base;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.mcp.core.protocol.McpTool;
 import io.mcp.core.utility.JsonSchemaUtility;
 import io.mcp.core.utility.Utility;
+import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import reactor.core.publisher.Mono;
 
 public abstract class BaseMcpTool implements McpTool {
@@ -32,6 +36,29 @@ public abstract class BaseMcpTool implements McpTool {
                     }
                 })
                 .build();
+    }
+
+    public CompletableFuture<CallToolResult> callWithLog(McpAsyncServerExchange exchange, CallToolRequest request){
+
+        if(Utility.isDebug()){
+
+            debugLog(exchange, request);
+            return call(exchange, request).thenApply(result -> {
+                debugLog(result);
+                return result;
+            });
+        }else{
+            return call(exchange, request);
+        
+        }
+    }
+    public void debugLog(CallToolResult result){
+        Utility.debug("XXX");
+        
+    }
+
+    public void debugLog(McpAsyncServerExchange exchange, CallToolRequest request){
+        Utility.debug("XXX");
     }
 
     @Override
