@@ -38,8 +38,8 @@ public class StandaloneLauncher {
        
          //update the version number whenever we make changes to the project
         Utility.debug("StandaloneLauncher v1 starting...");
+        Utility.debug("transport: " + transport);
 
-    
         if (transport == null) {
             transport = "http";
         }
