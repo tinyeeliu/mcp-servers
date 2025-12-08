@@ -15,7 +15,7 @@ public interface McpTool {
     //public McpSchema.JsonSchema getInputSchema();
     public McpSchema.Tool getTool();
     public McpServerFeatures.AsyncToolSpecification getToolSpecification();
-
+    public String getModule();
     public List<McpServerFeatures.AsyncPromptSpecification> getPromptSpecifications() ;
     public CompletableFuture<CallToolResult> call(McpAsyncServerExchange exchange, CallToolRequest request);
     public String getName();

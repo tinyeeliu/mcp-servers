@@ -1,0 +1,34 @@
+{
+  "resources": [
+    {
+      "pattern": ".*\\.xml$"
+    },
+    {
+      "pattern": ".*\\.yaml$"
+    },
+    {
+      "pattern": ".*\\.json$"
+    },
+    {
+      "pattern": ".*\\.avsc$"
+    },
+    {
+      "pattern": ".*\\.p12$"
+    },
+    {
+      "pattern": ".*\\.pem$"
+    },
+    {
+      "pattern": ".*\\.txt$"
+    },
+    {
+      "pattern": ".*\\.html$"
+    },
+    {
+      "pattern": ".*\\.csv$"
+    },
+    {
+      "pattern": ".*\\.properties$"
+    }
+  ]
+}

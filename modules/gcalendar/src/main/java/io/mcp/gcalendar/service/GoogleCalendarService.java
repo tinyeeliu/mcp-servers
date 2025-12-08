@@ -8,16 +8,16 @@ import io.mcp.core.utility.Utility;
 import io.mcp.random.tool.GenerateRandom;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 
-public class RandomService extends BaseMcpService{
+public class GoogleCalendarService extends BaseMcpService{
 
 
-    public RandomService() {
-        Utility.debug("RandomService constructor");
+    public GoogleCalendarService() {
+        Utility.debug("GoogleCalendarService constructor");
     }
   
     @Override
     public Implementation getServerInfo() {
-        Implementation result = new Implementation("mcp-random-server", "1.0.0");
+        Implementation result = new Implementation("mcp-gcalendar-server", "1.0.0");
         return result;
     }
 
@@ -30,7 +30,7 @@ public class RandomService extends BaseMcpService{
 
     @Override
     public String getModule() {
-        return "random";
+        return "gcalendar";
     }
 
 

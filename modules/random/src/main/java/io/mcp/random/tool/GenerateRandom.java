@@ -18,6 +18,10 @@ public class GenerateRandom extends BaseMcpTool {
         return "generateRandom";
     }
 
+    @Override
+    public String getModule() {
+        return "random";
+    }
 
     private String makePrefix() {
         return "";

@@ -37,8 +37,7 @@ public abstract class BaseMcpTool implements McpTool {
     public McpSchema.Tool getTool() {
 
         try {
-            String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/tool/" + getName() + ".json");
-            JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
+            JsonNode jsonNode = loadJsonSchema("tool");
             return JsonSchemaUtility.getTool(jsonNode);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load tool specification", e);
@@ -52,11 +51,10 @@ public abstract class BaseMcpTool implements McpTool {
     public List<McpServerFeatures.AsyncPromptSpecification> getPromptSpecifications() {
 
         try {
-            String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/prompt/" + getName() + ".json");
-            if (jsonSchema == null) {
+            JsonNode jsonNode = loadJsonSchema("prompt");
+            if (jsonNode == null) {
                 return new ArrayList<>();
             }
-            JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
             return JsonSchemaUtility.getPrompts(jsonNode);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load prompt specification", e);
@@ -68,25 +66,35 @@ public abstract class BaseMcpTool implements McpTool {
     @Override
     public List<McpServerFeatures.AsyncResourceSpecification> getResourceSpecifications() {
         try {
-            String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/resource/" + getName() + ".json");
-            if (jsonSchema == null) {
+            JsonNode jsonNode = loadJsonSchema("resource");
+            if (jsonNode == null) {
                 return new ArrayList<>();
             }
-            JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
             return JsonSchemaUtility.getResources(jsonNode);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load resource specification", e);
         }
     }
 
+    private JsonNode loadJsonSchema(String type) throws IOException {
+    
+        String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/"+ getModule() + "/"+ type + "/" + getName() + ".json");
+        if (jsonSchema == null) {
+            return null;
+        }
+        JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
+        return jsonNode;
+       
+    }
+
     @Override
     public List<McpServerFeatures.AsyncResourceTemplateSpecification> getResourceTemplateSpecifications() {
         try {
-            String jsonSchema = JsonSchemaUtility.loadJsonSchema("io/mcp/spec/template/" + getName() + ".json");
-            if (jsonSchema == null) {
+         
+            JsonNode jsonNode = loadJsonSchema("template");
+            if (jsonNode == null) {
                 return new ArrayList<>();
             }
-            JsonNode jsonNode = JsonSchemaUtility.toJsonNode(jsonSchema);
             return JsonSchemaUtility.getTemplates(jsonNode);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load resource template specification", e);
