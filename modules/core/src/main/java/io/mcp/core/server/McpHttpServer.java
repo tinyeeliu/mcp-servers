@@ -50,10 +50,14 @@ public class McpHttpServer {
     // Session management for SSE connections
     private final Map<String, SseSession> sseSessions = new ConcurrentHashMap<>();
 
-
     public McpHttpServer() {
-        this.port = Utility.getConfiguredPort();
-        this.pathPrefix = ConfigUtility.getString("HTTP_PREFIX", "/");
+
+        this(Utility.getConfiguredPort());
+    }
+
+    public McpHttpServer(int port) {
+        this.port = port;
+        this.pathPrefix = ConfigUtility.getString("HTTP_PREFIX", "");
 
         debug("McpHttpServer constructor with port:", port);
         currentInstance = this;
@@ -65,6 +69,20 @@ public class McpHttpServer {
      */
     public static McpHttpServer getCurrentInstance() {
         return currentInstance;
+    }
+
+    /**
+     * Apply the configured path prefix to a path.
+     * Returns the path unchanged if pathPrefix is empty or null.
+     */
+    private String applyPathPrefix(String path) {
+        if (pathPrefix == null || pathPrefix.isEmpty()) {
+            return path;
+        }
+        // Ensure path starts with / and remove any trailing / from prefix
+        String normalizedPrefix = pathPrefix.endsWith("/") ? pathPrefix.substring(0, pathPrefix.length() - 1) : pathPrefix;
+        String normalizedPath = path.startsWith("/") ? path : "/" + path;
+        return normalizedPrefix + normalizedPath;
     }
 
     private void initializeModuleServers() {
@@ -92,17 +110,17 @@ public class McpHttpServer {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
         // Register status endpoint
-        httpServer.createContext("/status.json", this::handleStatusRequest);
+        httpServer.createContext(applyPathPrefix("/status.json"), this::handleStatusRequest);
 
         // Register health endpoint
-        httpServer.createContext("/health", this::handleHealthRequest);
-        httpServer.createContext("/_ah/warmup", this::handleWarmupRequest);
+        httpServer.createContext(applyPathPrefix("/health"), this::handleHealthRequest);
+        httpServer.createContext(applyPathPrefix("/_ah/warmup"), this::handleWarmupRequest);
 
 
         // Register module-specific SSE endpoints
         for (String moduleName : moduleServers.keySet()) {
-            String ssePath = "/" + moduleName + "/sse";
-            String messagePath = "/" + moduleName + "/messages";
+            String ssePath = applyPathPrefix("/" + moduleName + "/sse");
+            String messagePath = applyPathPrefix("/" + moduleName + "/messages");
 
             httpServer.createContext(ssePath, exchange -> handleModuleSseConnection(exchange, moduleName));
             httpServer.createContext(messagePath, exchange -> handleModuleSseMessage(exchange, moduleName));
@@ -112,10 +130,10 @@ public class McpHttpServer {
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
 
-        System.out.println("MCP SSE Server running on http://localhost:" + port);
+        System.out.println("MCP SSE Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
         for (String moduleName : moduleServers.keySet()) {
-            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + "/" + moduleName + "/sse");
-            System.out.println("  Module '" + moduleName + "' Message endpoint: http://localhost:" + port + "/" + moduleName + "/messages");
+            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/sse"));
+            System.out.println("  Module '" + moduleName + "' Message endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/messages"));
         }
     }
 
@@ -133,16 +151,16 @@ public class McpHttpServer {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
         // Register status endpoint
-        httpServer.createContext("/status.json", this::handleStatusRequest);
+        httpServer.createContext(applyPathPrefix("/status.json"), this::handleStatusRequest);
 
         // Register health endpoint
-        httpServer.createContext("/health", this::handleHealthRequest);
-        httpServer.createContext("/_ah/warmup", this::handleWarmupRequest);
+        httpServer.createContext(applyPathPrefix("/health"), this::handleHealthRequest);
+        httpServer.createContext(applyPathPrefix("/_ah/warmup"), this::handleWarmupRequest);
 
 
         // Register module-specific endpoints for streamable HTTP
         for (String moduleName : moduleServers.keySet()) {
-            String path = "/" + moduleName + "/mcp";
+            String path = applyPathPrefix("/" + moduleName + "/mcp");
             httpServer.createContext(path, exchange -> handleModuleStreamableRequest(exchange, moduleName));
         }
 
@@ -150,9 +168,9 @@ public class McpHttpServer {
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
 
-        System.out.println("MCP Streamable HTTP Server running on http://localhost:" + port);
+        System.out.println("MCP Streamable HTTP Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
         for (String moduleName : moduleServers.keySet()) {
-            System.out.println("  Module '" + moduleName + "' endpoint: http://localhost:" + port + "/" + moduleName + "/mcp");
+            System.out.println("  Module '" + moduleName + "' endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/mcp"));
         }
     }
 
@@ -163,22 +181,17 @@ public class McpHttpServer {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
         // Register status endpoint
-        httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
+        httpServer.createContext(applyPathPrefix("/status.json"), this::handleStatusRequest);
 
         // Register health endpoint
-        httpServer.createContext("/health", this::handleHealthRequest);
-
-        // Register health endpoint
-        httpServer.createContext("/health", this::handleHealthRequest);
-
-        // Register health endpoint
-        httpServer.createContext("/health", this::handleHealthRequest);
+        httpServer.createContext(applyPathPrefix("/health"), this::handleHealthRequest);
+        httpServer.createContext(applyPathPrefix("/_ah/warmup"), this::handleWarmupRequest);
 
         // Register module-specific endpoints for both transport types
         for (String moduleName : moduleServers.keySet()) {
-            String mcpPath = "/" + moduleName + "/mcp";
-            String ssePath = "/" + moduleName + "/sse";
-            String messagePath = "/" + moduleName + "/messages";
+            String mcpPath = applyPathPrefix("/" + moduleName + "/mcp");
+            String ssePath = applyPathPrefix("/" + moduleName + "/sse");
+            String messagePath = applyPathPrefix("/" + moduleName + "/messages");
 
             httpServer.createContext(mcpPath, exchange -> handleModuleStreamableRequest(exchange, moduleName));
             httpServer.createContext(ssePath, exchange -> handleModuleSseConnection(exchange, moduleName));
@@ -189,10 +202,10 @@ public class McpHttpServer {
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.start();
 
-        System.out.println("MCP HTTP Server running on http://localhost:" + port);
+        System.out.println("MCP HTTP Server running on http://localhost:" + port + (pathPrefix.isEmpty() ? "" : " (prefix: " + pathPrefix + ")"));
         for (String moduleName : moduleServers.keySet()) {
-            System.out.println("  Module '" + moduleName + "' Streamable endpoint: http://localhost:" + port + "/" + moduleName + "/mcp");
-            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + "/" + moduleName + "/sse");
+            System.out.println("  Module '" + moduleName + "' Streamable endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/mcp"));
+            System.out.println("  Module '" + moduleName + "' SSE endpoint: http://localhost:" + port + applyPathPrefix("/" + moduleName + "/sse"));
         }
     }
 
@@ -341,7 +354,7 @@ public class McpHttpServer {
 
         try {
             // Send endpoint event with message URL
-            String messageUrl = "http://localhost:" + port + "/" + moduleName + "/messages?sessionId=" + sessionId;
+            String messageUrl = "http://localhost:" + port + applyPathPrefix("/" + moduleName + "/messages") + "?sessionId=" + sessionId;
             String endpointEvent = "event: endpoint\ndata: " + messageUrl + "\n\n";
             os.write(endpointEvent.getBytes(StandardCharsets.UTF_8));
             os.flush();
