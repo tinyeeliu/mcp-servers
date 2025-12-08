@@ -133,7 +133,7 @@ public class McpHttpServer {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
         // Register status endpoint
-        httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
+        httpServer.createContext("/status.json", this::handleStatusRequest);
 
         // Register health endpoint
         httpServer.createContext("/health", this::handleHealthRequest);
