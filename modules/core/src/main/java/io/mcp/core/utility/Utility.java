@@ -59,6 +59,8 @@ public class Utility {
             return; // Already redirected
         }
 
+        System.err.println("Redirecting stderr to log file: " + ERROR_LOG_FILE);
+
         try {
             PrintStream errStream = new PrintStream(new FileOutputStream(ERROR_LOG_FILE, true), true);
             System.setErr(errStream);
