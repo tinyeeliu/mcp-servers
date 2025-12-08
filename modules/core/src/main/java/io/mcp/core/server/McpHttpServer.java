@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import io.mcp.core.command.HealthCommand;
 import io.mcp.core.command.StatusCommand;
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.utility.ServiceUtility;
@@ -79,7 +80,12 @@ public class McpHttpServer {
         httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
         // Register status endpoint
-        httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
+        httpServer.createContext("/status.json", this::handleStatusRequest);
+
+        // Register health endpoint
+        httpServer.createContext("/health", this::handleHealthRequest);
+        httpServer.createContext("/_ah/warmup", this::handleWarmupRequest);
+
 
         // Register module-specific SSE endpoints
         for (String moduleName : moduleServers.keySet()) {
@@ -117,6 +123,15 @@ public class McpHttpServer {
         // Register status endpoint
         httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
 
+        // Register health endpoint
+        httpServer.createContext("/health", this::handleHealthRequest);
+
+        // Register health endpoint
+        httpServer.createContext("/health", this::handleHealthRequest);
+
+        // Register health endpoint
+        httpServer.createContext("/health", this::handleHealthRequest);
+
         // Register module-specific endpoints for streamable HTTP
         for (String moduleName : moduleServers.keySet()) {
             String path = "/" + moduleName + "/mcp";
@@ -141,6 +156,15 @@ public class McpHttpServer {
 
         // Register status endpoint
         httpServer.createContext("/mcp/status.json", this::handleStatusRequest);
+
+        // Register health endpoint
+        httpServer.createContext("/health", this::handleHealthRequest);
+
+        // Register health endpoint
+        httpServer.createContext("/health", this::handleHealthRequest);
+
+        // Register health endpoint
+        httpServer.createContext("/health", this::handleHealthRequest);
 
         // Register module-specific endpoints for both transport types
         for (String moduleName : moduleServers.keySet()) {
@@ -445,6 +469,37 @@ public class McpHttpServer {
             }
         } catch (Exception e) {
             debug("Error handling status request:", e.getMessage());
+            sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle GET /health requests.
+     */
+    private void handleHealthRequest(HttpExchange exchange) throws IOException {
+        if (!"GET".equals(exchange.getRequestMethod())) {
+            sendError(exchange, 405, "Method Not Allowed");
+            return;
+        }
+
+        try {
+            // Execute the HealthCommand
+            HealthCommand healthCommand = new HealthCommand();
+            Map<String, Object> healthResult = healthCommand.execute().join();
+
+            // Convert the Map to JSON using Jackson ObjectMapper
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String jsonResponse = objectMapper.writeValueAsString(healthResult);
+
+            // Send JSON response
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(responseBytes);
+            }
+        } catch (Exception e) {
+            debug("Error handling health request:", e.getMessage());
             sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
         }
     }
