@@ -15,8 +15,11 @@ public class RandomNumberServer {
             transport = args[0];
         }
 
+         
         Utility.setDebug(true);
+        /* 
         Utility.redirectStdErrToLog();
+        */
 
         McpService service = new RandomService();
         StandaloneLauncher.launch(transport, service);
