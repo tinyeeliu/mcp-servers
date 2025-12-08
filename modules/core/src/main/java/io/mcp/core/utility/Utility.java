@@ -97,7 +97,7 @@ public class Utility {
         String message = sb.toString();
 
         // If stderr is redirected to the log file, use stderr to avoid double logging
-        if (stderrRedirected) {
+        if (FILE_LOGGING && stderrRedirected) {
             System.err.println(message);
         } else {
             writeToErrorLog(message);
@@ -129,7 +129,7 @@ public class Utility {
             errorLogWriter.flush();
         } catch (IOException e) {
             // Fallback to stderr if file logging fails
-            System.err.println("Failed to write to error log 2: " + e.getMessage());
+            System.err.println("Failed to write to error log 3: " + e.getMessage());
             System.err.println(message);
         }
     }
