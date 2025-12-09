@@ -31,6 +31,12 @@ if [ $# -eq 0 ]; then
         echo "Skipping clean (use --clean to clean)"
         mvn install -DskipTests
     fi
+
+    # Check if build succeeded
+    if [ $? -ne 0 ]; then
+        echo "All modules build failed. Exiting..."
+        exit 1
+    fi
 else
     MODULE_NAME=$1
     MODULE_PATH="modules/${MODULE_NAME}"
@@ -45,5 +51,11 @@ else
     else
         echo "Skipping clean (use --clean to clean)"
         mvn install -DskipTests -pl "$MODULE_PATH" -am
+    fi
+
+    # Check if build succeeded
+    if [ $? -ne 0 ]; then
+        echo "Module '$MODULE_NAME' build failed. Exiting..."
+        exit 1
     fi
 fi

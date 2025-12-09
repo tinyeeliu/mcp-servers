@@ -27,6 +27,12 @@ cd "$(dirname "$0")/.." || exit 1
 # Build and run packaged JAR
 ./scripts/build_module.sh
 
+# Check if build succeeded
+if [ $? -ne 0 ]; then
+    echo "Build failed. Exiting..."
+    exit 1
+fi
+
 if [ ! -f "$JAR_FILE" ]; then
     echo "Error: JAR file not found: $JAR_FILE"
     echo "Please build the module first using: ./scripts/build_module.sh $MODULE_NAME"

@@ -16,6 +16,12 @@ MODULE_PATH="modules/${MODULE_NAME}"
 # Build and run packaged JAR
 ./scripts/build_module.sh
 
+# Check if build succeeded
+if [ $? -ne 0 ]; then
+    echo "Build failed. Exiting..."
+    exit 1
+fi
+
 # Change to project root directory
 cd "$(dirname "$0")/.." || exit 1
 

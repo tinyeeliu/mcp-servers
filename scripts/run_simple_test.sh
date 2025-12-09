@@ -25,6 +25,12 @@ case "$MODE" in
         echo "Building and running simple test server with JVM..."
         ./scripts/build_module.sh $MODULE_NAME
 
+        # Check if build succeeded
+        if [ $? -ne 0 ]; then
+            echo "Build failed. Exiting..."
+            exit 1
+        fi
+
         if [ ! -f "$JAR_FILE" ]; then
             echo "Error: JAR file not found: $JAR_FILE"
             exit 1
@@ -38,6 +44,12 @@ case "$MODE" in
 
         # Build native image
         ./scripts/build_native.sh $MODULE_NAME
+
+        # Check if build succeeded
+        if [ $? -ne 0 ]; then
+            echo "Build failed. Exiting..."
+            exit 1
+        fi
 
         if [ ! -f "$NATIVE_IMAGE" ]; then
             echo "Error: Native image not found: $NATIVE_IMAGE"

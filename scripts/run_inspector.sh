@@ -40,6 +40,12 @@ cd "$(dirname "$0")/.." || exit 1
 # Build the specific module
 ./scripts/build_module.sh "$MODULE_NAME"
 
+# Check if build succeeded
+if [ $? -ne 0 ]; then
+    echo "Build failed. Exiting..."
+    exit 1
+fi
+
 echo "Running MCP Inspector for module: $MODULE_NAME"
 echo "Transport: $TRANSPORT"
 echo ""

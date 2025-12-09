@@ -18,6 +18,12 @@ fi
 
 ./scripts/build_module.sh "$MODULE_NAME"
 
+# Check if build succeeded
+if [ $? -ne 0 ]; then
+    echo "Build failed. Exiting..."
+    exit 1
+fi
+
 # Kill any existing processes on inspector ports and MCP server port
 kill -9 $(lsof -ti:6274 2>/dev/null) 2>/dev/null || true
 kill -9 $(lsof -ti:6277 2>/dev/null) 2>/dev/null || true
