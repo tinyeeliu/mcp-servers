@@ -1,0 +1,18 @@
+{
+  "name": "getEvent",
+  "description": "Get a single event (Events.get)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "calendarId": {
+        "type": "string",
+        "description": "Calendar containing the event"
+      },
+      "eventId": {
+        "type": "string",
+        "description": "Event identifier"
+      }
+    },
+    "required": ["calendarId", "eventId"]
+  }
+}

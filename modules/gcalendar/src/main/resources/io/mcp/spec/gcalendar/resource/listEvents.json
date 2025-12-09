@@ -1,0 +1,9 @@
+[
+  {
+    "uri": "https://developers.google.com/calendar/api/v3/reference/events/list",
+    "name": "events_list_docs",
+    "title": "Google Events.list docs",
+    "description": "Reference for listing events",
+    "mimeType": "text/html"
+  }
+]

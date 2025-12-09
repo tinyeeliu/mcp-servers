@@ -1,0 +1,19 @@
+[
+  {
+    "name": "get_event_default",
+    "title": "Get event details",
+    "description": "Retrieve a specific event",
+    "arguments": [
+      {
+        "name": "calendarId",
+        "description": "Calendar identifier",
+        "required": true
+      },
+      {
+        "name": "eventId",
+        "description": "Event identifier",
+        "required": true
+      }
+    ]
+  }
+]

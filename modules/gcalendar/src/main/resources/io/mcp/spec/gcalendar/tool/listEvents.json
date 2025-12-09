@@ -1,0 +1,45 @@
+{
+  "name": "listEvents",
+  "description": "List events in a calendar (Events.list)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "calendarId": {
+        "type": "string",
+        "description": "Calendar ID to list events from"
+      },
+      "timeMin": {
+        "type": "string",
+        "description": "RFC3339 lower bound (inclusive) for event start time"
+      },
+      "timeMax": {
+        "type": "string",
+        "description": "RFC3339 upper bound (exclusive) for event start time"
+      },
+      "maxResults": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 250,
+        "description": "Maximum number of events to return"
+      },
+      "pageToken": {
+        "type": "string",
+        "description": "Token for the next results page"
+      },
+      "singleEvents": {
+        "type": "boolean",
+        "description": "Expand recurring events into instances"
+      },
+      "orderBy": {
+        "type": "string",
+        "enum": ["startTime", "updated"],
+        "description": "Sorting for results"
+      },
+      "query": {
+        "type": "string",
+        "description": "Free text search over events"
+      }
+    },
+    "required": ["calendarId"]
+  }
+}

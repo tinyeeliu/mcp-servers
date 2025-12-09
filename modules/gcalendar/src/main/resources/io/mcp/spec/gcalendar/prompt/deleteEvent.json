@@ -1,0 +1,11 @@
+[
+  {
+    "name": "delete_event_default",
+    "title": "Delete an event",
+    "description": "Remove an event by ID",
+    "arguments": [
+      {"name": "calendarId", "description": "Calendar identifier", "required": true},
+      {"name": "eventId", "description": "Event identifier", "required": true}
+    ]
+  }
+]

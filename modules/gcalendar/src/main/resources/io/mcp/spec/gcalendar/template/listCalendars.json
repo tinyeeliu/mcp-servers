@@ -1,0 +1,9 @@
+[
+  {
+    "uriTemplate": "https://www.googleapis.com/calendar/v3/users/me/calendarList{?pageToken,maxResults}",
+    "name": "calendar_list_template",
+    "title": "CalendarList list URL",
+    "description": "REST endpoint template for calendar list",
+    "mimeType": "application/json"
+  }
+]

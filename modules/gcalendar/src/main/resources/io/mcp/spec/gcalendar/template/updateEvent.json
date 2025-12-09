@@ -1,0 +1,9 @@
+[
+  {
+    "uriTemplate": "https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}",
+    "name": "events_patch_template",
+    "title": "Events.patch URL",
+    "description": "REST endpoint template for updating an event",
+    "mimeType": "application/json"
+  }
+]

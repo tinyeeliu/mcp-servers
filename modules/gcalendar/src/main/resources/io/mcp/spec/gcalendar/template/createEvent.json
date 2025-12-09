@@ -1,0 +1,9 @@
+[
+  {
+    "uriTemplate": "https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events",
+    "name": "events_insert_template",
+    "title": "Events.insert URL",
+    "description": "REST endpoint template for creating an event",
+    "mimeType": "application/json"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "name": "create_event_basic",
+    "title": "Create an event",
+    "description": "Create a single event with start/end times",
+    "arguments": [
+      {"name": "calendarId", "description": "Calendar identifier", "required": true},
+      {"name": "summary", "description": "Event title", "required": true},
+      {"name": "startTime", "description": "RFC3339 start", "required": true},
+      {"name": "endTime", "description": "RFC3339 end", "required": true}
+    ]
+  }
+]

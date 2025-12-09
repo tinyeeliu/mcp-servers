@@ -1,0 +1,9 @@
+[
+  {
+    "uriTemplate": "https://www.googleapis.com/calendar/v3/calendars/{calendarId}",
+    "name": "calendar_get_template",
+    "title": "Calendars.get URL",
+    "description": "REST endpoint template for getting a calendar",
+    "mimeType": "application/json"
+  }
+]

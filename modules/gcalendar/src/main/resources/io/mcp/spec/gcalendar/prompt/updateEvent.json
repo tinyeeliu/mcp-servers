@@ -1,0 +1,14 @@
+[
+  {
+    "name": "update_event_fields",
+    "title": "Update event fields",
+    "description": "Patch an event with new summary/time",
+    "arguments": [
+      {"name": "calendarId", "description": "Calendar identifier", "required": true},
+      {"name": "eventId", "description": "Event identifier", "required": true},
+      {"name": "summary", "description": "New title", "required": false},
+      {"name": "startTime", "description": "New start (RFC3339)", "required": false},
+      {"name": "endTime", "description": "New end (RFC3339)", "required": false}
+    ]
+  }
+]

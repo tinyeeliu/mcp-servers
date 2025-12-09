@@ -1,0 +1,9 @@
+[
+  {
+    "uriTemplate": "https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}",
+    "name": "events_delete_template",
+    "title": "Events.delete URL",
+    "description": "REST endpoint template for deleting an event",
+    "mimeType": "application/json"
+  }
+]

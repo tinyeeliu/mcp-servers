@@ -1,0 +1,8 @@
+[
+  {
+    "name": "list_calendars_default",
+    "title": "List calendars",
+    "description": "Fetch calendars the user can access",
+    "arguments": []
+  }
+]

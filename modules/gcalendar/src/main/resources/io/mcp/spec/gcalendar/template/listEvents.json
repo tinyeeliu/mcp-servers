@@ -1,0 +1,9 @@
+[
+  {
+    "uriTemplate": "https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events{?timeMin,timeMax,pageToken,maxResults,orderBy,singleEvents,q}",
+    "name": "events_list_template",
+    "title": "Events.list URL",
+    "description": "REST endpoint template for listing events",
+    "mimeType": "application/json"
+  }
+]

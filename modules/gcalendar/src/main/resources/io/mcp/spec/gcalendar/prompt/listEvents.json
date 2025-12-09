@@ -1,0 +1,24 @@
+[
+  {
+    "name": "list_events_time_window",
+    "title": "List events within a time window",
+    "description": "Fetch events between timeMin and timeMax",
+    "arguments": [
+      {
+        "name": "calendarId",
+        "description": "Calendar identifier",
+        "required": true
+      },
+      {
+        "name": "timeMin",
+        "description": "RFC3339 start time",
+        "required": false
+      },
+      {
+        "name": "timeMax",
+        "description": "RFC3339 end time",
+        "required": false
+      }
+    ]
+  }
+]

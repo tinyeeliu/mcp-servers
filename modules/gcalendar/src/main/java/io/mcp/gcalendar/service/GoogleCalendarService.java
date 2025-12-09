@@ -1,31 +1,68 @@
 package io.mcp.gcalendar.service;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.mcp.core.base.BaseMcpService;
+import io.mcp.core.manager.AuthManager;
 import io.mcp.core.protocol.McpTool;
 import io.mcp.core.utility.Utility;
-import io.mcp.gcalendar.tool.AddEvent;
+import io.mcp.gcalendar.tool.CreateEvent;
+import io.mcp.gcalendar.tool.DeleteEvent;
+import io.mcp.gcalendar.tool.GetCalendar;
+import io.mcp.gcalendar.tool.GetEvent;
+import io.mcp.gcalendar.tool.ListCalendars;
+import io.mcp.gcalendar.tool.ListEvents;
+import io.mcp.gcalendar.tool.UpdateEvent;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 
-public class GoogleCalendarService extends BaseMcpService{
+public class GoogleCalendarService extends BaseMcpService {
 
+    private static final String BASE_URL = "https://www.googleapis.com/calendar/v3";
+
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
+    private final AuthManager authManager;
 
     public GoogleCalendarService() {
+        this(HttpClient.newHttpClient(), new ObjectMapper(), new AuthManager());
         Utility.debug("GoogleCalendarService constructor");
     }
-  
-    @Override
-    public Implementation getServerInfo() {
-        Implementation result = new Implementation("mcp-gcalendar-server", "1.0.0");
-        return result;
+
+    public GoogleCalendarService(HttpClient httpClient, ObjectMapper objectMapper, AuthManager authManager) {
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+        this.authManager = authManager;
     }
 
-
+    @Override
+    public Implementation getServerInfo() {
+        return new Implementation("mcp-gcalendar-server", "1.0.0");
+    }
 
     @Override
     public List<McpTool> getTools() {
-        return List.of(new AddEvent());
+        return List.of(
+            new ListCalendars(this),
+            new GetCalendar(this),
+            new ListEvents(this),
+            new GetEvent(this),
+            new CreateEvent(this),
+            new UpdateEvent(this),
+            new DeleteEvent(this)
+        );
     }
 
     @Override
@@ -33,6 +70,221 @@ public class GoogleCalendarService extends BaseMcpService{
         return "gcalendar";
     }
 
+    public CompletableFuture<String> fetchAuthToken(String sessionId) {
+        return authManager.getAuthInfo(sessionId == null ? "" : sessionId)
+            .thenApply(map -> {
+                Object token = map.get("authToken");
+                if (token == null) {
+                    throw new RuntimeException("No authToken available for session");
+                }
+                return token.toString();
+            });
+    }
 
+    private URI buildUri(String path, Map<String, String> queryParams) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(BASE_URL).append(path);
+        if (queryParams != null && !queryParams.isEmpty()) {
+            sb.append("?");
+            boolean first = true;
+            for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+                if (entry.getValue() == null || entry.getValue().isBlank()) {
+                    continue;
+                }
+                if (!first) {
+                    sb.append("&");
+                }
+                sb.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+                first = false;
+            }
+        }
+        return URI.create(sb.toString());
+    }
 
+    private HttpRequest.Builder requestBuilder(String token, URI uri) {
+        return HttpRequest.newBuilder(uri)
+            .header("Authorization", "Bearer " + token)
+            .header("Accept", "application/json");
+    }
+
+    private CompletableFuture<JsonNode> send(HttpRequest request) {
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenApply(response -> {
+                String body = response.body();
+                int status = response.statusCode();
+                if (status >= 200 && status < 300) {
+                    try {
+                        if (body == null || body.isBlank()) {
+                            ObjectNode node = objectMapper.createObjectNode();
+                            node.put("status", status);
+                            return node;
+                        }
+                        return objectMapper.readTree(body);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to parse Google response: " + e.getMessage(), e);
+                    }
+                }
+                throw new RuntimeException("Google API error " + status + ": " + body);
+            });
+    }
+
+    public CompletableFuture<JsonNode> listCalendars(String token, Integer maxResults, String pageToken) {
+        Map<String, String> query = new HashMap<>();
+        if (maxResults != null) {
+            query.put("maxResults", maxResults.toString());
+        }
+        if (pageToken != null) {
+            query.put("pageToken", pageToken);
+        }
+        URI uri = buildUri("/users/me/calendarList", query);
+        HttpRequest request = requestBuilder(token, uri).GET().build();
+        return send(request);
+    }
+
+    public CompletableFuture<JsonNode> getCalendar(String token, String calendarId) {
+        URI uri = buildUri("/calendars/" + encodeSegment(calendarId), Map.of());
+        HttpRequest request = requestBuilder(token, uri).GET().build();
+        return send(request);
+    }
+
+    public CompletableFuture<JsonNode> listEvents(
+        String token,
+        String calendarId,
+        String timeMin,
+        String timeMax,
+        Integer maxResults,
+        String pageToken,
+        Boolean singleEvents,
+        String orderBy,
+        String queryText
+    ) {
+        Map<String, String> query = new HashMap<>();
+        if (timeMin != null) {
+            query.put("timeMin", timeMin);
+        }
+        if (timeMax != null) {
+            query.put("timeMax", timeMax);
+        }
+        if (maxResults != null) {
+            query.put("maxResults", maxResults.toString());
+        }
+        if (pageToken != null) {
+            query.put("pageToken", pageToken);
+        }
+        if (singleEvents != null) {
+            query.put("singleEvents", singleEvents.toString());
+        }
+        if (orderBy != null) {
+            query.put("orderBy", orderBy);
+        }
+        if (queryText != null) {
+            query.put("q", queryText);
+        }
+        URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events", query);
+        HttpRequest request = requestBuilder(token, uri).GET().build();
+        return send(request);
+    }
+
+    public CompletableFuture<JsonNode> getEvent(String token, String calendarId, String eventId) {
+        URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events/" + encodeSegment(eventId), Map.of());
+        HttpRequest request = requestBuilder(token, uri).GET().build();
+        return send(request);
+    }
+
+    public CompletableFuture<JsonNode> createEvent(
+        String token,
+        String calendarId,
+        String summary,
+        String description,
+        String location,
+        String startTime,
+        String endTime,
+        String timeZone
+    ) {
+        URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events", Map.of());
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("summary", summary);
+        if (description != null) {
+            payload.put("description", description);
+        }
+        if (location != null) {
+            payload.put("location", location);
+        }
+        ObjectNode startNode = payload.putObject("start");
+        startNode.put("dateTime", startTime);
+        if (timeZone != null) {
+            startNode.put("timeZone", timeZone);
+        }
+        ObjectNode endNode = payload.putObject("end");
+        endNode.put("dateTime", endTime);
+        if (timeZone != null) {
+            endNode.put("timeZone", timeZone);
+        }
+        HttpRequest request = requestBuilder(token, uri)
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+            .build();
+        return send(request);
+    }
+
+    public CompletableFuture<JsonNode> updateEvent(
+        String token,
+        String calendarId,
+        String eventId,
+        String summary,
+        String description,
+        String location,
+        String startTime,
+        String endTime,
+        String timeZone
+    ) {
+        URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events/" + encodeSegment(eventId), Map.of());
+        ObjectNode payload = objectMapper.createObjectNode();
+        if (summary != null) {
+            payload.put("summary", summary);
+        }
+        if (description != null) {
+            payload.put("description", description);
+        }
+        if (location != null) {
+            payload.put("location", location);
+        }
+        if (startTime != null) {
+            ObjectNode startNode = payload.putObject("start");
+            startNode.put("dateTime", startTime);
+            if (timeZone != null) {
+                startNode.put("timeZone", timeZone);
+            }
+        }
+        if (endTime != null) {
+            ObjectNode endNode = payload.putObject("end");
+            endNode.put("dateTime", endTime);
+            if (timeZone != null) {
+                endNode.put("timeZone", timeZone);
+            }
+        }
+        HttpRequest request = requestBuilder(token, uri)
+            .header("Content-Type", "application/json")
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(payload.toString()))
+            .build();
+        return send(request);
+    }
+
+    public CompletableFuture<JsonNode> deleteEvent(String token, String calendarId, String eventId) {
+        URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events/" + encodeSegment(eventId), Map.of());
+        HttpRequest request = requestBuilder(token, uri).DELETE().build();
+        return send(request);
+    }
+
+    public String extractSessionId(Map<String, Object> transportContext) {
+        if (transportContext == null) {
+            return null;
+        }
+        Object sessionId = transportContext.get("session-id");
+        return sessionId != null ? sessionId.toString() : null;
+    }
+
+    private String encodeSegment(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
 }

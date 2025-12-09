@@ -1,0 +1,14 @@
+[
+  {
+    "name": "get_calendar_default",
+    "title": "Get calendar metadata",
+    "description": "Retrieve details for a specific calendar",
+    "arguments": [
+      {
+        "name": "calendarId",
+        "description": "Calendar identifier (e.g., primary)",
+        "required": true
+      }
+    ]
+  }
+]
