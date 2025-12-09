@@ -9,6 +9,12 @@ echo "Step 1: Building modules..."
 # Build all modules with clean
 ./scripts/build_module.sh --clean
 
+# Check if module build succeeded
+if [ $? -ne 0 ]; then
+    echo "Module build failed. Exiting..."
+    exit 1
+fi
+
 echo ""
 echo "Step 2: Building main mcp-service project..."
 
@@ -17,6 +23,12 @@ cd "$(dirname "$0")/../projects/mcp" || exit 1
 
 # Clean and package the main project
 mvn clean package -DskipTests
+
+# Check if main build succeeded
+if [ $? -ne 0 ]; then
+    echo "Main project build failed. Exiting..."
+    exit 1
+fi
 
 echo ""
 echo "Build completed successfully!"

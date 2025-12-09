@@ -9,6 +9,12 @@ echo ""
 # Build the project
 ./scripts/build.sh
 
+# Check if build succeeded
+if [ $? -ne 0 ]; then
+    echo "Build failed. Exiting..."
+    exit 1
+fi
+
 # Change to the main project directory to run the jar
 cd "$(dirname "$0")/../projects/mcp" || exit 1
 
