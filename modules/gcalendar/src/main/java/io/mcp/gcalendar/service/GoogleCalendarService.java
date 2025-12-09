@@ -276,12 +276,27 @@ public class GoogleCalendarService extends BaseMcpService {
         return send(request);
     }
 
-    public String extractSessionId(Map<String, Object> transportContext) {
+    public String extractSessionId(Object transportContext) {
         if (transportContext == null) {
             return null;
         }
-        Object sessionId = transportContext.get("session-id");
-        return sessionId != null ? sessionId.toString() : null;
+
+        // Direct map access if provided
+        if (transportContext instanceof Map<?, ?> map) {
+            Object sessionId = map.get("session-id");
+            return sessionId != null ? sessionId.toString() : null;
+        }
+
+        // Fallback: attempt reflective get(String) for McpTransportContext or similar
+        try {
+            var method = transportContext.getClass().getMethod("get", Object.class);
+            Object sessionId = method.invoke(transportContext, "session-id");
+            return sessionId != null ? sessionId.toString() : null;
+        } catch (Exception ignored) {
+            // ignore and fall through
+        }
+
+        return null;
     }
 
     private String encodeSegment(String value) {
