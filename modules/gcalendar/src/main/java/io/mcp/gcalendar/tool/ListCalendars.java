@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.mcp.core.base.BaseMcpTool;
+import io.mcp.core.utility.Utility;
 import io.mcp.gcalendar.service.GoogleCalendarService;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -32,6 +33,8 @@ public class ListCalendars extends BaseMcpTool {
 
     @Override
     public CompletableFuture<McpSchema.CallToolResult> call(McpAsyncServerExchange exchange, CallToolRequest request) {
+        
+        Utility.debug("ListCalendars tool call" );
         try {
             Map<String, Object> args = request.arguments();
             Integer maxResults = parseInteger(args, "maxResults");
@@ -42,6 +45,7 @@ public class ListCalendars extends BaseMcpTool {
                 .thenApply(this::success)
                 .exceptionally(this::failure);
         } catch (Exception e) {
+            Utility.debug(e);
             return CompletableFuture.completedFuture(failure(e));
         }
     }

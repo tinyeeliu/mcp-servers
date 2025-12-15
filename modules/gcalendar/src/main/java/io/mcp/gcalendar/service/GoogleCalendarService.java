@@ -71,9 +71,11 @@ public class GoogleCalendarService extends BaseMcpService {
     }
 
     public CompletableFuture<String> fetchAuthToken(String sessionId) {
+        Utility.debug("fetchAuthToken sessionId", sessionId);
         return authManager.getAuthInfo(sessionId == null ? "" : sessionId)
             .thenApply(map -> {
                 Object token = map.get("authToken");
+                Utility.debug("fetchAuthToken result", token);
                 if (token == null) {
                     throw new RuntimeException("No authToken available for session");
                 }
@@ -129,6 +131,9 @@ public class GoogleCalendarService extends BaseMcpService {
     }
 
     public CompletableFuture<JsonNode> listCalendars(String token, Integer maxResults, String pageToken) {
+       
+        Utility.debug("listCalendars", token, maxResults, pageToken);
+       
         Map<String, String> query = new HashMap<>();
         if (maxResults != null) {
             query.put("maxResults", maxResults.toString());

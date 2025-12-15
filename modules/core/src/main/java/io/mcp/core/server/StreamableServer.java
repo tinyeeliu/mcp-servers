@@ -200,6 +200,9 @@ public class StreamableServer {
         return "application/json";
     }
 
+
+  
+
     private CompletableFuture<JsonNode> processJsonRpcRequest(JsonNode request, String sessionId) {
         try {
             String method = request.path("method").asText();

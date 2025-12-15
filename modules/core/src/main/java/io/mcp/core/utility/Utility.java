@@ -70,6 +70,16 @@ public class Utility {
         }
     }
 
+
+    public static void debug(Throwable e) {
+        e.printStackTrace(System.err);
+    }
+
+    public static void debug(String message, Throwable e) {
+        System.err.println(message);
+        e.printStackTrace(System.err);
+    }
+
     /**
      * Log debug messages to error log file.
      * Uses file logging to avoid interfering with stdout JSON-RPC communication.
