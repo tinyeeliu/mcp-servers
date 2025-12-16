@@ -37,7 +37,7 @@ case "$MODE" in
         fi
 
         echo "Running JVM version..."
-        java --enable-preview -jar "$JAR_FILE" simple-test stdio
+        java -jar "$JAR_FILE" simple-test stdio
         ;;
     native)
         echo "Building and running simple test server with GraalVM native..."
