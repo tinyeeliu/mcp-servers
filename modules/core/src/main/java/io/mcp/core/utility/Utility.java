@@ -1,5 +1,7 @@
 package io.mcp.core.utility;
 
+import io.mcp.core.protocol.McpContainer;
+
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -7,16 +9,18 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Logger;
 
 public class Utility {
 
     private static final int DEFAULT_PORT = 8080;
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private static boolean FILE_LOGGING = false;
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final String ERROR_LOG_FILE = "mcp_server_error.log";
     private static PrintWriter errorLogWriter;
     private static boolean stderrRedirected = false;
+    private static McpContainer mcpContainer = null;
 
     public static void setDebug(boolean debug) {
         DEBUG = debug;
@@ -38,6 +42,10 @@ public class Utility {
         return FILE_LOGGING;
     }
 
+
+    public static void setMcpContainer(McpContainer container){
+        mcpContainer = container;
+    }
 
 	public static boolean isNative(){
 
@@ -72,10 +80,21 @@ public class Utility {
 
 
     public static void debug(Throwable e) {
+        if(mcpContainer != null){
+            mcpContainer.log("ERROR", e);
+            return;
+        }
         e.printStackTrace(System.err);
     }
 
     public static void debug(String message, Throwable e) {
+
+        if(mcpContainer != null){
+            mcpContainer.log(message, e);
+            return;
+        }
+
+
         System.err.println(message);
         e.printStackTrace(System.err);
     }
@@ -88,6 +107,12 @@ public class Utility {
      * @param messages Objects to log, will be concatenated with spaces
      */
     public static void debug(Object... messages) {
+
+        if(mcpContainer != null){
+            mcpContainer.log(System.Logger.Level.DEBUG, messages);
+            return;
+        }
+
         if (!DEBUG) {
             return;
         }
@@ -106,7 +131,7 @@ public class Utility {
 
         String message = sb.toString();
 
-        
+
         // If stderr is redirected to the log file, use stderr to avoid double logging
         if (FILE_LOGGING && stderrRedirected) {
             writeToErrorLog(message);
