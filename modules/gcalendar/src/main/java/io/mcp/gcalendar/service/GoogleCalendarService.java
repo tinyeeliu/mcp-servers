@@ -110,10 +110,25 @@ public class GoogleCalendarService extends BaseMcpService {
     }
 
     private CompletableFuture<JsonNode> send(HttpRequest request) {
+        return send(request, null, null);
+    }
+
+    private CompletableFuture<JsonNode> send(HttpRequest request, String method, String requestBody) {
+        // Log request details
+        Utility.debug("HTTP Request - URL: " + request.uri() +
+                     ", Method: " + (method != null ? method : "UNKNOWN"));
+        if (requestBody != null && !requestBody.isEmpty()) {
+            Utility.debug("HTTP Request Body: " + requestBody);
+        }
+
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
             .thenApply(response -> {
                 String body = response.body();
                 int status = response.statusCode();
+
+                // Log response details
+                Utility.debug("HTTP Response - Status: " + status + ", Body: " + body);
+
                 if (status >= 200 && status < 300) {
                     try {
                         if (body == null || body.isBlank()) {
@@ -131,9 +146,9 @@ public class GoogleCalendarService extends BaseMcpService {
     }
 
     public CompletableFuture<JsonNode> listCalendars(String token, Integer maxResults, String pageToken) {
-       
+
         Utility.debug("listCalendars", token, maxResults, pageToken);
-       
+
         Map<String, String> query = new HashMap<>();
         if (maxResults != null) {
             query.put("maxResults", maxResults.toString());
@@ -143,13 +158,13 @@ public class GoogleCalendarService extends BaseMcpService {
         }
         URI uri = buildUri("/users/me/calendarList", query);
         HttpRequest request = requestBuilder(token, uri).GET().build();
-        return send(request);
+        return send(request, "GET", null);
     }
 
     public CompletableFuture<JsonNode> getCalendar(String token, String calendarId) {
         URI uri = buildUri("/calendars/" + encodeSegment(calendarId), Map.of());
         HttpRequest request = requestBuilder(token, uri).GET().build();
-        return send(request);
+        return send(request, "GET", null);
     }
 
     public CompletableFuture<JsonNode> listEvents(
@@ -187,13 +202,13 @@ public class GoogleCalendarService extends BaseMcpService {
         }
         URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events", query);
         HttpRequest request = requestBuilder(token, uri).GET().build();
-        return send(request);
+        return send(request, "GET", null);
     }
 
     public CompletableFuture<JsonNode> getEvent(String token, String calendarId, String eventId) {
         URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events/" + encodeSegment(eventId), Map.of());
         HttpRequest request = requestBuilder(token, uri).GET().build();
-        return send(request);
+        return send(request, "GET", null);
     }
 
     public CompletableFuture<JsonNode> createEvent(
@@ -225,11 +240,12 @@ public class GoogleCalendarService extends BaseMcpService {
         if (timeZone != null) {
             endNode.put("timeZone", timeZone);
         }
+        String payloadStr = payload.toString();
         HttpRequest request = requestBuilder(token, uri)
             .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+            .POST(HttpRequest.BodyPublishers.ofString(payloadStr))
             .build();
-        return send(request);
+        return send(request, "POST", payloadStr);
     }
 
     public CompletableFuture<JsonNode> updateEvent(
@@ -268,17 +284,18 @@ public class GoogleCalendarService extends BaseMcpService {
                 endNode.put("timeZone", timeZone);
             }
         }
+        String payloadStr = payload.toString();
         HttpRequest request = requestBuilder(token, uri)
             .header("Content-Type", "application/json")
-            .method("PATCH", HttpRequest.BodyPublishers.ofString(payload.toString()))
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(payloadStr))
             .build();
-        return send(request);
+        return send(request, "PATCH", payloadStr);
     }
 
     public CompletableFuture<JsonNode> deleteEvent(String token, String calendarId, String eventId) {
         URI uri = buildUri("/calendars/" + encodeSegment(calendarId) + "/events/" + encodeSegment(eventId), Map.of());
         HttpRequest request = requestBuilder(token, uri).DELETE().build();
-        return send(request);
+        return send(request, "DELETE", null);
     }
 
     public String extractSessionId(Object transportContext) {
