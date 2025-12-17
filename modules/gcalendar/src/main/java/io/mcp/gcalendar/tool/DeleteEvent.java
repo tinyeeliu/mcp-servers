@@ -59,7 +59,7 @@ public class DeleteEvent extends BaseMcpTool {
 
     private CallToolResult success(JsonNode node) {
         return McpSchema.CallToolResult.builder()
-            .addTextContent(node.toPrettyString())
+            .addTextContent(node.toString())
             .isError(false)
             .build();
     }
