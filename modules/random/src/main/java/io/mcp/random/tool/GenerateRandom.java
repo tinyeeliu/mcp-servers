@@ -10,8 +10,6 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 
 public class GenerateRandom extends BaseMcpTool {
 
-    private static final Random random = new Random();
-
 
     @Override
     public String getName() {
@@ -35,6 +33,8 @@ public class GenerateRandom extends BaseMcpTool {
         if (bound <= 0) {
             throw new IllegalArgumentException("bound must be a positive integer");
         }
+        
+        Random random = new Random();
         int result = random.nextInt(bound);
         return CompletableFuture.completedFuture(
             McpSchema.CallToolResult.builder()
