@@ -2,13 +2,24 @@ package io.mcp.core.base;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+import io.mcp.core.manager.AuthManager;
 import io.mcp.core.protocol.McpService;
 import io.mcp.core.protocol.McpTool;
+import io.mcp.core.utility.Utility;
 import io.modelcontextprotocol.server.McpServerFeatures;
 
+import static io.mcp.core.utility.Utility.debug;
+
 public abstract class BaseMcpService implements McpService {
-    
+
+    private AuthManager authManager;
+
+    public BaseMcpService(){
+        this.authManager = new AuthManager();
+    }
+
     @Override
     public List<McpServerFeatures.AsyncPromptSpecification> getPromptSpecifications(){
         List<McpTool> tools = getTools();
@@ -40,5 +51,17 @@ public abstract class BaseMcpService implements McpService {
             allResourceTemplateSpecifications.addAll(resourceTemplateSpecifications);
         }
         return allResourceTemplateSpecifications;
+    }
+
+    public CompletableFuture<String> fetchAuthToken(String sessionId) {
+
+        return authManager.getAuthInfo(sessionId, getModule())
+                .thenApply(map -> {
+                    String token = (String) map.get("authToken");
+                    if (token == null) {
+                        throw new RuntimeException("No authToken available for session");
+                    }
+                    return token;
+                });
     }
 }

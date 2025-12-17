@@ -1,5 +1,8 @@
 package io.mcp.core.manager;
 
+import io.mcp.core.protocol.McpContainer;
+import io.mcp.core.utility.Utility;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -14,11 +17,19 @@ For example, Google Calendar auth token for each specific user to access the Goo
 */
 
 public class AuthManager {
-    
-    public CompletableFuture<Map<String, Object>> getAuthInfo(String sessionId){
-        //TODO: Implement this method, return dummy data for now.
-        Map<String, Object> authInfo = new HashMap<>();
-        authInfo.put("authToken", "dummy_auth_token");
-        return CompletableFuture.completedFuture(authInfo);
+
+    public CompletableFuture<Map<String, Object>> getAuthInfo(String sessionId, String module){
+
+        McpContainer mcpContainer = Utility.getMcpContainer();
+
+        if(mcpContainer == null){
+            Map<String, Object> info = new HashMap<>();
+            info.put("authToken", sessionId);
+            return CompletableFuture.completedFuture(info);
+        }
+
+        return mcpContainer.getAuthInfo(sessionId, module);
+
+
     }
 }

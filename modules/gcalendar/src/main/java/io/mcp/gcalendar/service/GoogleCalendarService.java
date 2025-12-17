@@ -34,17 +34,17 @@ public class GoogleCalendarService extends BaseMcpService {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final AuthManager authManager;
+
 
     public GoogleCalendarService() {
-        this(HttpClient.newHttpClient(), new ObjectMapper(), new AuthManager());
+        this(HttpClient.newHttpClient(), new ObjectMapper());
         Utility.debug("GoogleCalendarService constructor");
     }
 
-    public GoogleCalendarService(HttpClient httpClient, ObjectMapper objectMapper, AuthManager authManager) {
+    public GoogleCalendarService(HttpClient httpClient, ObjectMapper objectMapper) {
+
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
-        this.authManager = authManager;
     }
 
     @Override
@@ -70,18 +70,7 @@ public class GoogleCalendarService extends BaseMcpService {
         return "gcalendar";
     }
 
-    public CompletableFuture<String> fetchAuthToken(String sessionId) {
-        Utility.debug("fetchAuthToken sessionId", sessionId);
-        return authManager.getAuthInfo(sessionId == null ? "" : sessionId)
-            .thenApply(map -> {
-                Object token = map.get("authToken");
-                Utility.debug("fetchAuthToken result", token);
-                if (token == null) {
-                    throw new RuntimeException("No authToken available for session");
-                }
-                return token.toString();
-            });
-    }
+
 
     private URI buildUri(String path, Map<String, String> queryParams) {
         StringBuilder sb = new StringBuilder();

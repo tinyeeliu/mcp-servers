@@ -47,7 +47,11 @@ public class Utility {
         mcpContainer = container;
     }
 
-	public static boolean isNative(){
+    public static McpContainer getMcpContainer() {
+        return mcpContainer;
+    }
+
+    public static boolean isNative(){
 
 		return "Substrate VM".equals(System.getProperty("java.vm.name"));
 

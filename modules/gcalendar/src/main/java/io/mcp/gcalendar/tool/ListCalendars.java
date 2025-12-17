@@ -33,13 +33,13 @@ public class ListCalendars extends BaseMcpTool {
 
     @Override
     public CompletableFuture<McpSchema.CallToolResult> call(McpAsyncServerExchange exchange, CallToolRequest request) {
-        
+
         Utility.debug("ListCalendars tool call" );
         try {
             Map<String, Object> args = request.arguments();
             Integer maxResults = parseInteger(args, "maxResults");
             String pageToken = parseString(args, "pageToken");
-            String sessionId = service.extractSessionId(exchange.transportContext());
+            String sessionId = exchange.sessionId();
             return service.fetchAuthToken(sessionId)
                 .thenCompose(token -> service.listCalendars(token, maxResults, pageToken))
                 .thenApply(this::success)

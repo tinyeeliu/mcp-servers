@@ -345,6 +345,7 @@ public class StreamableServer {
 
         debug("    Tool call - name:", toolName);
         debug("    Tool call - arguments:", arguments);
+        debug("    Session ID:", sessionId);
 
         McpServerFeatures.AsyncToolSpecification spec = toolMap.get(toolName);
         if (spec == null) {
