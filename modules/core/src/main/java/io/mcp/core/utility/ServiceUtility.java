@@ -7,9 +7,10 @@ import io.mcp.core.server.StreamableServer;
 
 public class ServiceUtility {
 
-    private static Map<String, McpService> serviceMap = null;
+    private static Map<String, McpService> serviceMap = new HashMap<>();
     private static List<McpService> serviceList = null;
-    private static Map<String, StreamableServer> serverMap = null;
+    private static Map<String, StreamableServer> serverMap = new HashMap<>();
+    private static List<McpService> registeredServiceList = null;
 
     public static List<McpService> getRegisteredServices() {
         init();
@@ -19,6 +20,16 @@ public class ServiceUtility {
     public static McpService getService(String module) {
         init();
         return serviceMap.get(module);
+    }
+
+    public static void registerService(McpService service) {
+
+        if(registeredServiceList == null) {
+            registeredServiceList = new ArrayList<>();
+        }
+
+        registeredServiceList.add(service);
+        serviceMap.put(service.getModule(), service);
     }
 
     public static StreamableServer getServer(String module){
@@ -43,31 +54,27 @@ public class ServiceUtility {
 
     private static void init() {
 
-        if(serviceMap != null) {
+        if(serviceList != null) {
             return;
         }
 
         ServiceLoader<McpService> featureLoader = ServiceLoader.load(McpService.class);
-        Utility.debug("Registered MCP Services", featureLoader);
+        Utility.debug("Auto Registered MCP Services", featureLoader);
 
         List<McpService> list = new ArrayList<>();
-        Map<String, McpService> map = new HashMap<>();
 
         int count = 0;
 
         for (McpService feature : featureLoader) {
             Utility.debug(feature.getClass().getName());
             list.add(feature);
-            map.put(feature.getModule(), feature);
+            serviceMap.put(feature.getModule(), feature);
             count++;
         }
 
         Utility.debug("loaded services count", count);
 
         serviceList = list;
-        serviceMap = map;
-
-        serverMap = new HashMap<>();
 
     }
 }
