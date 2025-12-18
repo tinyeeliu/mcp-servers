@@ -48,16 +48,21 @@ public class ServiceUtility {
         }
 
         ServiceLoader<McpService> featureLoader = ServiceLoader.load(McpService.class);
-        Utility.debug("Registered MCP Services:");
+        Utility.debug("Registered MCP Services", featureLoader);
 
         List<McpService> list = new ArrayList<>();
         Map<String, McpService> map = new HashMap<>();
+
+        int count = 0;
 
         for (McpService feature : featureLoader) {
             Utility.debug(feature.getClass().getName());
             list.add(feature);
             map.put(feature.getModule(), feature);
+            count++;
         }
+
+        Utility.debug("loaded services count", count);
 
         serviceList = list;
         serviceMap = map;
