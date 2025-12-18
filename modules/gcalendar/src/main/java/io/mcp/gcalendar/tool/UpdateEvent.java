@@ -45,7 +45,7 @@ public class UpdateEvent extends BaseMcpTool {
             if (summary == null && description == null && location == null && startTime == null && endTime == null && timeZone == null) {
                 throw new IllegalArgumentException("At least one field to update must be provided");
             }
-            String sessionId = service.extractSessionId(exchange.transportContext());
+            String sessionId = exchange.sessionId();
             return service.fetchAuthToken(sessionId)
                 .thenCompose(token -> service.updateEvent(token, calendarId, eventId, summary, description, location, startTime, endTime, timeZone))
                 .thenApply(this::success)

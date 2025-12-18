@@ -42,7 +42,7 @@ public class ListEvents extends BaseMcpTool {
             Boolean singleEvents = parseBoolean(args, "singleEvents");
             String orderBy = parseString(args, "orderBy");
             String query = parseString(args, "query");
-            String sessionId = service.extractSessionId(exchange.transportContext());
+            String sessionId = exchange.sessionId();
             return service.fetchAuthToken(sessionId)
                 .thenCompose(token -> service.listEvents(token, calendarId, timeMin, timeMax, maxResults, pageToken, singleEvents, orderBy, query))
                 .thenApply(this::success)

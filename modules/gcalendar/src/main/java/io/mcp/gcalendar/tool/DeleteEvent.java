@@ -36,7 +36,7 @@ public class DeleteEvent extends BaseMcpTool {
             Map<String, Object> args = request.arguments();
             String calendarId = require(args, "calendarId");
             String eventId = require(args, "eventId");
-            String sessionId = service.extractSessionId(exchange.transportContext());
+            String sessionId = exchange.sessionId();
             return service.fetchAuthToken(sessionId)
                 .thenCompose(token -> service.deleteEvent(token, calendarId, eventId))
                 .thenApply(this::success)

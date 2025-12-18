@@ -35,7 +35,7 @@ public class GetCalendar extends BaseMcpTool {
         try {
             Map<String, Object> args = request.arguments();
             String calendarId = parseRequiredString(args, "calendarId");
-            String sessionId = service.extractSessionId(exchange.transportContext());
+            String sessionId = exchange.sessionId();
             return service.fetchAuthToken(sessionId)
                 .thenCompose(token -> service.getCalendar(token, calendarId))
                 .thenApply(this::success)

@@ -287,6 +287,7 @@ public class GoogleCalendarService extends BaseMcpService {
         return send(request, "DELETE", null);
     }
 
+    /*
     public String extractSessionId(Object transportContext) {
         if (transportContext == null) {
             return null;
@@ -308,7 +309,7 @@ public class GoogleCalendarService extends BaseMcpService {
         }
 
         return null;
-    }
+    }*/
 
     private String encodeSegment(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);

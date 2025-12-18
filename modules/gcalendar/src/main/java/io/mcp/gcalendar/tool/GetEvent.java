@@ -36,7 +36,7 @@ public class GetEvent extends BaseMcpTool {
             Map<String, Object> args = request.arguments();
             String calendarId = parseRequiredString(args, "calendarId");
             String eventId = parseRequiredString(args, "eventId");
-            String sessionId = service.extractSessionId(exchange.transportContext());
+            String sessionId = exchange.sessionId();
             return service.fetchAuthToken(sessionId)
                 .thenCompose(token -> service.getEvent(token, calendarId, eventId))
                 .thenApply(this::success)

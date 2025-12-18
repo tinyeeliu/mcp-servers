@@ -41,7 +41,7 @@ public class CreateEvent extends BaseMcpTool {
             String description = optional(args, "description");
             String location = optional(args, "location");
             String timeZone = optional(args, "timeZone");
-            String sessionId = service.extractSessionId(exchange.transportContext());
+            String sessionId = exchange.sessionId();
             return service.fetchAuthToken(sessionId)
                 .thenCompose(token -> service.createEvent(token, calendarId, summary, description, location, startTime, endTime, timeZone))
                 .thenApply(this::success)
